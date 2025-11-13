@@ -143,6 +143,56 @@
 			background: white;
 			display: block;
 			margin-bottom: 10px;
+			touch-action: none;
+		}
+
+		.signature-options {
+			margin-bottom: 20px;
+		}
+
+		.option-tabs {
+			display: flex;
+			gap: 10px;
+			margin-bottom: 20px;
+		}
+
+		.tab-button {
+			flex: 1;
+			padding: 12px;
+			background: #f0f0f0;
+			border: 2px solid #e0e0e0;
+			border-radius: 6px;
+			cursor: pointer;
+			font-size: 1em;
+			transition: all 0.3s;
+		}
+
+		.tab-button.active {
+			background: #075CFA;
+			color: white;
+			border-color: #075CFA;
+		}
+
+		.tab-button:hover:not(.active) {
+			background: #e0e0e0;
+		}
+
+		.signature-input {
+			display: none;
+		}
+
+		.signature-input.active {
+			display: block;
+		}
+
+		.typed-signature {
+			width: 100%;
+			padding: 15px;
+			border: 2px solid #e0e0e0;
+			border-radius: 6px;
+			font-size: 1.5em;
+			font-family: 'Brush Script MT', cursive;
+			text-align: center;
 		}
 
 		.signature-controls {
@@ -338,11 +388,25 @@
 				</div>
 
 				<div class="form-group">
-					<label>Signature * (Sign below using your mouse or finger)</label>
-					<canvas id="signaturePad" class="signature-pad" width="720" height="200"></canvas>
-					<div class="signature-controls">
-						<button type="button" class="btn-clear" onclick="clearSignature()">Clear Signature</button>
+					<label>Signature Method *</label>
+					<div class="option-tabs">
+						<button type="button" class="tab-button active" onclick="switchSignatureMethod('draw')">Draw Signature</button>
+						<button type="button" class="tab-button" onclick="switchSignatureMethod('type')">Type Name</button>
 					</div>
+
+					<div id="drawSignature" class="signature-input active">
+						<label>Sign below using your mouse or finger</label>
+						<canvas id="signaturePad" class="signature-pad" width="720" height="200"></canvas>
+						<div class="signature-controls">
+							<button type="button" class="btn-clear" onclick="clearSignature()">Clear Signature</button>
+						</div>
+					</div>
+
+					<div id="typeSignature" class="signature-input">
+						<label>Type your full name as it appears above</label>
+						<input type="text" id="typedName" class="typed-signature" placeholder="Type your full name here">
+					</div>
+
 					<div class="error" id="signatureError">Please provide your signature</div>
 				</div>
 			</div>
@@ -353,63 +417,125 @@
 </div>
 
 <script>
+	// Signature method tracking
+	let signatureMethod = 'draw';
+
 	// Signature Pad Setup
 	const canvas = document.getElementById('signaturePad');
 	const ctx = canvas.getContext('2d');
 	let isDrawing = false;
 	let hasSignature = false;
+	let lastX = 0;
+	let lastY = 0;
 
 	// Set canvas size for retina displays
 	const rect = canvas.getBoundingClientRect();
 	canvas.width = rect.width * 2;
 	canvas.height = rect.height * 2;
+	canvas.style.width = rect.width + 'px';
+	canvas.style.height = rect.height + 'px';
 	ctx.scale(2, 2);
 
+	// Improved drawing with smoother lines
+	ctx.lineWidth = 2;
+	ctx.lineCap = 'round';
+	ctx.lineJoin = 'round';
+	ctx.strokeStyle = '#000';
+
+	// Mouse events
 	canvas.addEventListener('mousedown', startDrawing);
 	canvas.addEventListener('mousemove', draw);
 	canvas.addEventListener('mouseup', stopDrawing);
 	canvas.addEventListener('mouseout', stopDrawing);
 
 	// Touch events for mobile
-	canvas.addEventListener('touchstart', handleTouch);
-	canvas.addEventListener('touchmove', handleTouch);
+	canvas.addEventListener('touchstart', handleTouchStart);
+	canvas.addEventListener('touchmove', handleTouchMove);
 	canvas.addEventListener('touchend', stopDrawing);
 
+	function getCoordinates(e) {
+		const rect = canvas.getBoundingClientRect();
+		if (e.touches) {
+			return {
+				x: e.touches[0].clientX - rect.left,
+				y: e.touches[0].clientY - rect.top
+			};
+		}
+		return {
+			x: e.clientX - rect.left,
+			y: e.clientY - rect.top
+		};
+	}
+
 	function startDrawing(e) {
+		e.preventDefault();
 		isDrawing = true;
 		hasSignature = true;
-		const rect = canvas.getBoundingClientRect();
+		const coords = getCoordinates(e);
+		lastX = coords.x;
+		lastY = coords.y;
 		ctx.beginPath();
-		ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+		ctx.moveTo(lastX, lastY);
 	}
 
 	function draw(e) {
 		if (!isDrawing) return;
-		const rect = canvas.getBoundingClientRect();
-		ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
-		ctx.strokeStyle = '#000';
-		ctx.lineWidth = 2;
-		ctx.lineCap = 'round';
+		e.preventDefault();
+
+		const coords = getCoordinates(e);
+
+		// Draw smooth line
+		ctx.beginPath();
+		ctx.moveTo(lastX, lastY);
+		ctx.lineTo(coords.x, coords.y);
 		ctx.stroke();
+
+		lastX = coords.x;
+		lastY = coords.y;
 	}
 
-	function stopDrawing() {
+	function stopDrawing(e) {
+		if (isDrawing) {
+			e.preventDefault();
+		}
 		isDrawing = false;
 	}
 
-	function handleTouch(e) {
+	function handleTouchStart(e) {
 		e.preventDefault();
-		const touch = e.touches[0];
-		const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 'mousemove', {
-			clientX: touch.clientX,
-			clientY: touch.clientY
-		});
-		canvas.dispatchEvent(mouseEvent);
+		startDrawing(e);
+	}
+
+	function handleTouchMove(e) {
+		e.preventDefault();
+		draw(e);
 	}
 
 	function clearSignature() {
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 		hasSignature = false;
+		document.getElementById('signatureError').style.display = 'none';
+	}
+
+	function switchSignatureMethod(method) {
+		signatureMethod = method;
+
+		// Update tab buttons
+		const buttons = document.querySelectorAll('.tab-button');
+		buttons.forEach(btn => btn.classList.remove('active'));
+		event.target.classList.add('active');
+
+		// Show/hide signature inputs
+		document.getElementById('drawSignature').classList.remove('active');
+		document.getElementById('typeSignature').classList.remove('active');
+
+		if (method === 'draw') {
+			document.getElementById('drawSignature').classList.add('active');
+		} else {
+			document.getElementById('typeSignature').classList.add('active');
+		}
+
+		// Clear error
 		document.getElementById('signatureError').style.display = 'none';
 	}
 
@@ -436,11 +562,37 @@
 		});
 
 		// Validate signature
-		if (!hasSignature) {
-			document.getElementById('signatureError').style.display = 'block';
-			isValid = false;
+		let signatureData = null;
+
+		if (signatureMethod === 'draw') {
+			if (!hasSignature) {
+				document.getElementById('signatureError').style.display = 'block';
+				isValid = false;
+			} else {
+				signatureData = canvas.toDataURL();
+				document.getElementById('signatureError').style.display = 'none';
+			}
 		} else {
-			document.getElementById('signatureError').style.display = 'none';
+			const typedName = document.getElementById('typedName').value.trim();
+			if (!typedName) {
+				document.getElementById('signatureError').style.display = 'block';
+				isValid = false;
+			} else {
+				// Create signature from typed name
+				const tempCanvas = document.createElement('canvas');
+				tempCanvas.width = 720;
+				tempCanvas.height = 200;
+				const tempCtx = tempCanvas.getContext('2d');
+				tempCtx.fillStyle = 'white';
+				tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+				tempCtx.font = '48px "Brush Script MT", cursive';
+				tempCtx.fillStyle = 'black';
+				tempCtx.textAlign = 'center';
+				tempCtx.textBaseline = 'middle';
+				tempCtx.fillText(typedName, tempCanvas.width / 2, tempCanvas.height / 2);
+				signatureData = tempCanvas.toDataURL();
+				document.getElementById('signatureError').style.display = 'none';
+			}
 		}
 
 		if (!isValid) {
@@ -452,9 +604,6 @@
 		const submitBtn = document.getElementById('submitBtn');
 		submitBtn.disabled = true;
 		submitBtn.textContent = 'Submitting...';
-
-		// Get signature as base64
-		const signatureData = canvas.toDataURL();
 
 		// Prepare data
 		const formData = {
@@ -468,6 +617,7 @@
 			phone: document.getElementById('phone').value,
 			email: document.getElementById('email').value,
 			date: document.getElementById('date').value,
+			signatureMethod: signatureMethod,
 			signature: signatureData,
 			timestamp: new Date().toISOString()
 		};
@@ -489,7 +639,15 @@
 			document.getElementById('successMessage').style.display = 'block';
 			document.getElementById('releaseForm').reset();
 			clearSignature();
+			document.getElementById('typedName').value = '';
 			document.getElementById('date').valueAsDate = new Date();
+
+			// Reset to draw method
+			signatureMethod = 'draw';
+			document.querySelectorAll('.tab-button')[0].classList.add('active');
+			document.querySelectorAll('.tab-button')[1].classList.remove('active');
+			document.getElementById('drawSignature').classList.add('active');
+			document.getElementById('typeSignature').classList.remove('active');
 
 			// Scroll to top
 			window.scrollTo({ top: 0, behavior: 'smooth' });
