@@ -28,7 +28,7 @@
 		}
 
 		.header {
-			background: linear-gradient(135deg, #228B22 0%, #228B22 100%);
+			background: linear-gradient(135deg, #075CFA 0%, #0448B8 100%);
 			color: white;
 			padding: 40px;
 			text-align: center;
@@ -134,6 +134,50 @@
 		.terms-box ul {
 			margin-left: 20px;
 			margin-bottom: 15px;
+		}
+
+		.esign-notice {
+			background: #fff3cd;
+			border-left: 4px solid #ffc107;
+			padding: 20px;
+			border-radius: 8px;
+			margin-bottom: 25px;
+			font-size: 0.9em;
+			line-height: 1.6;
+		}
+
+		.esign-notice h3 {
+			color: #856404;
+			margin-bottom: 12px;
+			font-size: 1.1em;
+		}
+
+		.esign-notice ul {
+			margin-left: 20px;
+			margin-top: 10px;
+		}
+
+		.consent-checkbox {
+			display: flex;
+			align-items: flex-start;
+			gap: 10px;
+			margin: 20px 0;
+			padding: 15px;
+			background: #f8f9fa;
+			border-radius: 6px;
+		}
+
+		.consent-checkbox input[type="checkbox"] {
+			margin-top: 4px;
+			width: 20px;
+			height: 20px;
+			cursor: pointer;
+		}
+
+		.consent-checkbox label {
+			margin: 0;
+			cursor: pointer;
+			flex: 1;
 		}
 
 		.signature-pad {
@@ -257,6 +301,22 @@
 			display: none;
 		}
 
+		.success-message .download-link {
+			display: inline-block;
+			margin-top: 15px;
+			padding: 10px 20px;
+			background: #28a745;
+			color: white;
+			text-decoration: none;
+			border-radius: 6px;
+			font-weight: 600;
+			transition: background 0.3s;
+		}
+
+		.success-message .download-link:hover {
+			background: #218838;
+		}
+
 		@media (max-width: 768px) {
 			.name-group,
 			.address-group {
@@ -284,6 +344,8 @@
 	<div class="form-content">
 		<div class="success-message" id="successMessage">
 			✓ Thank you! Your form has been submitted successfully.
+			<br>
+			<a href="#" id="downloadPDF" class="download-link">Download Your Signed Form (PDF)</a>
 		</div>
 
 		<form id="releaseForm">
@@ -346,6 +408,39 @@
 					<input type="email" id="email" required>
 					<div class="error" id="emailError">Please enter a valid email address</div>
 				</div>
+			</div>
+
+			<div class="section">
+				<h2 class="section-title">Electronic Signature Consent</h2>
+
+				<div class="esign-notice">
+					<h3>Notice Regarding Electronic Signatures</h3>
+					<p><strong>By signing this form electronically, you agree to conduct this transaction by electronic means.</strong> Please read the following information carefully:</p>
+
+					<p><strong>Your Rights:</strong></p>
+					<ul>
+						<li>You have the right to receive a paper copy of this agreement. To request a paper copy, please contact us at the email or phone number provided on our website.</li>
+						<li>You may withdraw your consent to electronic signatures at any time by contacting us.</li>
+						<li>After signing, you will be able to download a PDF copy of this completed form for your records.</li>
+					</ul>
+
+					<p><strong>System Requirements:</strong></p>
+					<ul>
+						<li>A device with internet connection (computer, tablet, or smartphone)</li>
+						<li>A current web browser (Chrome, Firefox, Safari, or Edge)</li>
+						<li>Ability to view and save PDF files</li>
+					</ul>
+
+					<p><strong>Record Retention:</strong> The Sprouting Lens will maintain a copy of your signed agreement in our records. You should also save a copy for your personal records.</p>
+				</div>
+
+				<div class="consent-checkbox">
+					<input type="checkbox" id="esignConsent" required>
+					<label for="esignConsent">
+						<strong>I consent to use electronic signatures and conduct this transaction electronically.</strong> I understand that my electronic signature will have the same legal effect as a handwritten signature. I have read and understood the notice above regarding my rights and the system requirements. *
+					</label>
+				</div>
+				<div class="error" id="esignConsentError">You must consent to electronic signatures to proceed</div>
 			</div>
 
 			<div class="section">
@@ -416,6 +511,7 @@
 	</div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 	// Signature method tracking
 	let signatureMethod = 'draw';
@@ -542,6 +638,110 @@
 	// Set today's date as default
 	document.getElementById('date').valueAsDate = new Date();
 
+	// Function to generate PDF
+	function generatePDF(formData) {
+		const { jsPDF } = window.jspdf;
+		const doc = new jsPDF();
+
+		// Add title
+		doc.setFontSize(20);
+		doc.setTextColor(7, 92, 250);
+		doc.text('The Sprouting Lens', 105, 20, { align: 'center' });
+		doc.setFontSize(14);
+		doc.text('Photo Release Form', 105, 28, { align: 'center' });
+
+		// Add form data
+		doc.setFontSize(10);
+		doc.setTextColor(0, 0, 0);
+		let y = 45;
+
+		doc.setFontSize(12);
+		doc.setFont(undefined, 'bold');
+		doc.text('Personal Information', 20, y);
+		y += 8;
+		doc.setFont(undefined, 'normal');
+		doc.setFontSize(10);
+
+		doc.text(`Name: ${formData.firstName} ${formData.lastName}`, 20, y);
+		y += 6;
+		doc.text(`Address: ${formData.address1}`, 20, y);
+		y += 6;
+		if (formData.address2) {
+			doc.text(`         ${formData.address2}`, 20, y);
+			y += 6;
+		}
+		doc.text(`         ${formData.city}, ${formData.state} ${formData.zipCode}`, 20, y);
+		y += 6;
+		doc.text(`Phone: ${formData.phone}`, 20, y);
+		y += 6;
+		doc.text(`Email: ${formData.email}`, 20, y);
+		y += 10;
+
+		// Add terms
+		doc.setFontSize(12);
+		doc.setFont(undefined, 'bold');
+		doc.text('Agreement', 20, y);
+		y += 8;
+		doc.setFont(undefined, 'normal');
+		doc.setFontSize(9);
+
+		const terms = [
+			'I hereby grant permission to The Sprouting Lens for any photos, videos, or audio',
+			'recordings of me to be used in and/or for any lawful promotional materials, including',
+			'but not limited to newsletters, flyers, posters, brochures, advertisements, press kits,',
+			'websites, social media pages, and other print and digital communications.',
+			'',
+			'This authorization shall continue indefinitely and extends to all languages, media,',
+			'formats, and markets, whether now known or later discovered.',
+			'',
+			'I understand that I will not receive any monetary compensation for the use of',
+			'images or sound recording.',
+			'',
+			'I grant The Sprouting Lens the right to edit, alter, copy, or distribute the images',
+			'or sound recordings for any lawful purpose and the right to use my name in',
+			'connection with the images or sound recordings if they choose.',
+			'',
+			'I hereby release and discharge The Sprouting Lens, its employees, agents, and',
+			'representatives from any and all claims, demands, or causes of action.'
+		];
+
+		terms.forEach(line => {
+			if (y > 270) {
+				doc.addPage();
+				y = 20;
+			}
+			doc.text(line, 20, y);
+			y += 5;
+		});
+
+		y += 5;
+		doc.text('By signing below, I acknowledge that I have completely read and fully', 20, y);
+		y += 5;
+		doc.text('understand the above release agreement and consent to electronic signatures.', 20, y);
+		y += 10;
+
+		// Add signature
+		doc.setFontSize(10);
+		doc.text(`Date: ${formData.date}`, 20, y);
+		y += 10;
+		doc.text('Signature:', 20, y);
+
+		if (formData.signature) {
+			try {
+				doc.addImage(formData.signature, 'PNG', 20, y + 2, 80, 20);
+			} catch (e) {
+				console.error('Error adding signature to PDF:', e);
+			}
+		}
+
+		y += 25;
+		doc.setFontSize(8);
+		doc.setTextColor(128, 128, 128);
+		doc.text(`Electronically signed on ${new Date(formData.timestamp).toLocaleString()}`, 20, y);
+
+		return doc;
+	}
+
 	// Form Submission
 	document.getElementById('releaseForm').addEventListener('submit', async function(e) {
 		e.preventDefault();
@@ -560,6 +760,16 @@
 				error.style.display = 'none';
 			}
 		});
+
+		// Validate e-sign consent
+		const esignConsent = document.getElementById('esignConsent');
+		const esignError = document.getElementById('esignConsentError');
+		if (!esignConsent.checked) {
+			esignError.style.display = 'block';
+			isValid = false;
+		} else {
+			esignError.style.display = 'none';
+		}
 
 		// Validate signature
 		let signatureData = null;
@@ -596,7 +806,7 @@
 		}
 
 		if (!isValid) {
-			alert('Please fill in all required fields and provide your signature.');
+			alert('Please fill in all required fields, provide your signature, and consent to electronic signatures.');
 			return;
 		}
 
@@ -637,6 +847,17 @@
 
 			// Show success message
 			document.getElementById('successMessage').style.display = 'block';
+
+			// Generate and offer PDF download
+			const pdf = generatePDF(formData);
+			const pdfBlob = pdf.output('blob');
+			const pdfUrl = URL.createObjectURL(pdfBlob);
+
+			const downloadLink = document.getElementById('downloadPDF');
+			downloadLink.href = pdfUrl;
+			downloadLink.download = `Sprouting_Lens_Release_${formData.firstName}_${formData.lastName}.pdf`;
+
+			// Reset form
 			document.getElementById('releaseForm').reset();
 			clearSignature();
 			document.getElementById('typedName').value = '';
