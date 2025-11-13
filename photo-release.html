@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Sprouting Lens - Photo Release Form</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .form-content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 35px;
+        }
+
+        .section-title {
+            font-size: 1.4em;
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="date"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="tel"]:focus,
+        input[type="date"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .name-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .address-group {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 15px;
+        }
+
+        .terms-box {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 25px;
+            font-size: 0.95em;
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .terms-box h3 {
+            color: #667eea;
+            margin-bottom: 12px;
+        }
+
+        .terms-box p {
+            margin-bottom: 15px;
+        }
+
+        .terms-box ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .signature-pad {
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            cursor: crosshair;
+            background: white;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .signature-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn-clear {
+            padding: 10px 20px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: background 0.3s;
+        }
+
+        .btn-clear:hover {
+            background: #c82333;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error {
+            color: #dc3545;
+            font-size: 0.9em;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #28a745;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .name-group,
+            .address-group {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .form-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>The Sprouting Lens</h1>
+        <p>Photo Release Form</p>
+    </div>
+
+    <div class="form-content">
+        <div class="success-message" id="successMessage">
+            ✓ Thank you! Your form has been submitted successfully.
+        </div>
+
+        <form id="releaseForm">
+            <div class="section">
+                <h2 class="section-title">Personal Information</h2>
+
+                <div class="name-group">
+                    <div class="form-group">
+                        <label>First Name *</label>
+                        <input type="text" id="firstName" required>
+                        <div class="error" id="firstNameError">Please enter your first name</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Last Name *</label>
+                        <input type="text" id="lastName" required>
+                        <div class="error" id="lastNameError">Please enter your last name</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Street Address *</label>
+                    <input type="text" id="address1" required>
+                    <div class="error" id="address1Error">Please enter your street address</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Street Address Line 2</label>
+                    <input type="text" id="address2">
+                </div>
+
+                <div class="address-group">
+                    <div class="form-group">
+                        <label>City *</label>
+                        <input type="text" id="city" required>
+                        <div class="error" id="cityError">Please enter your city</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>State *</label>
+                        <input type="text" id="state" required>
+                        <div class="error" id="stateError">Please enter your state</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Zip Code *</label>
+                        <input type="text" id="zipCode" required>
+                        <div class="error" id="zipCodeError">Please enter your zip code</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Phone *</label>
+                    <input type="tel" id="phone" required>
+                    <div class="error" id="phoneError">Please enter a valid phone number</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" id="email" required>
+                    <div class="error" id="emailError">Please enter a valid email address</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">Terms & Conditions</h2>
+
+                <div class="terms-box">
+                    <h3>Permission of Use</h3>
+                    <p>I hereby grant permission to The Sprouting Lens for any photos, videos, or audio recordings of me to be used in and/or for any lawful promotional materials, including but not limited to newsletters, flyers, posters, brochures, advertisements, press kits, websites, social media pages, and other print and digital communications.</p>
+                    <p>This authorization shall continue indefinitely and extends to all languages, media, formats, and markets, whether now known or later discovered.</p>
+                </div>
+
+                <div class="terms-box">
+                    <h3>No Compensation</h3>
+                    <p>I understand that I will not receive any monetary compensation for the use of images or sound recording.</p>
+                </div>
+
+                <div class="terms-box">
+                    <h3>Rights Granted</h3>
+                    <p>I grant The Sprouting Lens the following rights:</p>
+                    <ul>
+                        <li>The right to edit, alter, copy, or distribute the images or sound recordings for any lawful purpose.</li>
+                        <li>The right to use my name in connection with the images or sound recordings if they choose.</li>
+                    </ul>
+                </div>
+
+                <div class="terms-box">
+                    <h3>Release and Waiver</h3>
+                    <p>I hereby release and discharge The Sprouting Lens, its employees, agents, and representatives from any and all claims, demands, or causes of action that I or any of my heirs, representatives, executors, administrators, or any other person acting on my behalf or on behalf of my estate may have now or in the future for defamation, invasion of privacy, or violation of the right of publicity or any other right arising out of or relating to the use of the images or sound recordings.</p>
+                    <p><strong>By signing below, I acknowledge that I have completely read and fully understand the above release agreement.</strong></p>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">Signature</h2>
+
+                <div class="form-group">
+                    <label>Date *</label>
+                    <input type="date" id="date" required>
+                    <div class="error" id="dateError">Please select a date</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Signature * (Sign below using your mouse or finger)</label>
+                    <canvas id="signaturePad" class="signature-pad" width="720" height="200"></canvas>
+                    <div class="signature-controls">
+                        <button type="button" class="btn-clear" onclick="clearSignature()">Clear Signature</button>
+                    </div>
+                    <div class="error" id="signatureError">Please provide your signature</div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit" id="submitBtn">Submit Form</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Signature Pad Setup
+    const canvas = document.getElementById('signaturePad');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let hasSignature = false;
+
+    // Set canvas size for retina displays
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * 2;
+    canvas.height = rect.height * 2;
+    ctx.scale(2, 2);
+
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+
+    // Touch events for mobile
+    canvas.addEventListener('touchstart', handleTouch);
+    canvas.addEventListener('touchmove', handleTouch);
+    canvas.addEventListener('touchend', stopDrawing);
+
+    function startDrawing(e) {
+        isDrawing = true;
+        hasSignature = true;
+        const rect = canvas.getBoundingClientRect();
+        ctx.beginPath();
+        ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+    }
+
+    function draw(e) {
+        if (!isDrawing) return;
+        const rect = canvas.getBoundingClientRect();
+        ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+    }
+
+    function stopDrawing() {
+        isDrawing = false;
+    }
+
+    function handleTouch(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 'mousemove', {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        canvas.dispatchEvent(mouseEvent);
+    }
+
+    function clearSignature() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        hasSignature = false;
+        document.getElementById('signatureError').style.display = 'none';
+    }
+
+    // Set today's date as default
+    document.getElementById('date').valueAsDate = new Date();
+
+    // Form Submission
+    document.getElementById('releaseForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // Validate all fields
+        let isValid = true;
+        const fields = ['firstName', 'lastName', 'address1', 'city', 'state', 'zipCode', 'phone', 'email', 'date'];
+
+        fields.forEach(field => {
+            const input = document.getElementById(field);
+            const error = document.getElementById(field + 'Error');
+            if (!input.value.trim()) {
+                error.style.display = 'block';
+                isValid = false;
+            } else {
+                error.style.display = 'none';
+            }
+        });
+
+        // Validate signature
+        if (!hasSignature) {
+            document.getElementById('signatureError').style.display = 'block';
+            isValid = false;
+        } else {
+            document.getElementById('signatureError').style.display = 'none';
+        }
+
+        if (!isValid) {
+            alert('Please fill in all required fields and provide your signature.');
+            return;
+        }
+
+        // Disable submit button
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+
+        // Get signature as base64
+        const signatureData = canvas.toDataURL();
+
+        // Prepare data
+        const formData = {
+            firstName: document.getElementById('firstName').value,
+            lastName: document.getElementById('lastName').value,
+            address1: document.getElementById('address1').value,
+            address2: document.getElementById('address2').value,
+            city: document.getElementById('city').value,
+            state: document.getElementById('state').value,
+            zipCode: document.getElementById('zipCode').value,
+            phone: document.getElementById('phone').value,
+            email: document.getElementById('email').value,
+            date: document.getElementById('date').value,
+            signature: signatureData,
+            timestamp: new Date().toISOString()
+        };
+
+        // IMPORTANT: Replace this URL with your Google Apps Script Web App URL
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbyZTt-6TtvKf-HxXTm9XoE0J0BpD4VNQxWvsx1AK1qGpBCaFMmuTQnuP15mtGmV9JoKXA/exec';
+
+        try {
+            const response = await fetch(scriptURL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+
+            // Show success message
+            document.getElementById('successMessage').style.display = 'block';
+            document.getElementById('releaseForm').reset();
+            clearSignature();
+            document.getElementById('date').valueAsDate = new Date();
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            setTimeout(() => {
+                document.getElementById('successMessage').style.display = 'none';
+            }, 5000);
+
+        } catch (error) {
+            alert('There was an error submitting the form. Please try again.');
+            console.error('Error:', error);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Form';
+        }
+    });
+</script>
+</body>
+</html>
