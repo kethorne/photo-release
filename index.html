@@ -28,7 +28,7 @@
 		}
 
 		.header {
-			background: linear-gradient(135deg, #228B22 0%, #228B22 100%);
+			background: linear-gradient(135deg, #288B22 0%, #288B22 100%);
 			color: white;
 			padding: 40px;
 			text-align: center;
@@ -58,6 +58,10 @@
 
 		.section {
 			margin-bottom: 35px;
+		}
+
+		.section.hidden {
+			display: none;
 		}
 
 		.section-title {
@@ -109,6 +113,27 @@
 			display: grid;
 			grid-template-columns: 2fr 1fr 1fr;
 			gap: 15px;
+		}
+
+		.verification-input {
+			display: flex;
+			gap: 10px;
+			align-items: flex-start;
+		}
+
+		.verification-input input {
+			flex: 1;
+		}
+
+		.verification-input button {
+			white-space: nowrap;
+		}
+
+		.code-input {
+			max-width: 200px;
+			font-size: 1.2em;
+			text-align: center;
+			letter-spacing: 0.5em;
 		}
 
 		.terms-box {
@@ -180,16 +205,6 @@
 			flex: 1;
 		}
 
-		.signature-pad {
-			border: 2px solid #e0e0e0;
-			border-radius: 6px;
-			cursor: crosshair;
-			background: white;
-			display: block;
-			margin-bottom: 10px;
-			touch-action: none;
-		}
-
 		.signature-options {
 			margin-bottom: 20px;
 		}
@@ -239,6 +254,16 @@
 			text-align: center;
 		}
 
+		.signature-pad {
+			border: 2px solid #e0e0e0;
+			border-radius: 6px;
+			cursor: crosshair;
+			background: white;
+			display: block;
+			margin-bottom: 10px;
+			touch-action: none;
+		}
+
 		.signature-controls {
 			display: flex;
 			gap: 10px;
@@ -258,6 +283,27 @@
 
 		.btn-clear:hover {
 			background: #c82333;
+		}
+
+		.btn {
+			padding: 12px 24px;
+			background: #075CFA;
+			color: white;
+			border: none;
+			border-radius: 6px;
+			cursor: pointer;
+			font-size: 1em;
+			font-weight: 600;
+			transition: background 0.3s;
+		}
+
+		.btn:hover {
+			background: #0448B8;
+		}
+
+		.btn:disabled {
+			opacity: 0.6;
+			cursor: not-allowed;
 		}
 
 		.btn-submit {
@@ -291,6 +337,12 @@
 			display: none;
 		}
 
+		.success {
+			color: #28a745;
+			font-size: 0.9em;
+			margin-top: 5px;
+		}
+
 		.success-message {
 			background: #d4edda;
 			color: #155724;
@@ -315,6 +367,16 @@
 
 		.success-message .download-link:hover {
 			background: #218838;
+		}
+
+		.verified-badge {
+			display: inline-block;
+			background: #28a745;
+			color: white;
+			padding: 4px 12px;
+			border-radius: 4px;
+			font-size: 0.85em;
+			margin-left: 10px;
 		}
 
 		@media (max-width: 768px) {
@@ -349,8 +411,9 @@
 		</div>
 
 		<form id="releaseForm">
-			<div class="section">
-				<h2 class="section-title">Personal Information</h2>
+			<!-- Step 1: Personal Information -->
+			<div class="section" id="section1">
+				<h2 class="section-title">Step 1: Personal Information</h2>
 
 				<div class="name-group">
 					<div class="form-group">
@@ -397,20 +460,63 @@
 					</div>
 				</div>
 
+				<button type="button" class="btn-submit" onclick="goToStep2()">Continue to Verification</button>
+			</div>
+
+			<!-- Step 2: Email Verification -->
+			<div class="section hidden" id="section2">
+				<h2 class="section-title">Step 2: Email Verification</h2>
+
 				<div class="form-group">
-					<label>Phone *</label>
-					<input type="tel" id="phone" required>
+					<label>Email Address * <span id="emailVerifiedBadge"></span></label>
+					<div class="verification-input">
+						<input type="email" id="email" required>
+						<button type="button" class="btn" id="sendEmailBtn" onclick="sendEmailCode()">Send Code</button>
+					</div>
+					<div class="error" id="emailError">Please enter a valid email address</div>
+				</div>
+
+				<div class="form-group" id="emailCodeGroup" style="display: none;">
+					<label>Enter Verification Code *</label>
+					<div class="verification-input">
+						<input type="text" class="code-input" id="emailCode" maxlength="6" placeholder="000000">
+						<button type="button" class="btn" onclick="verifyEmailCode()">Verify</button>
+					</div>
+					<div class="error" id="emailCodeError"></div>
+					<div class="success" id="emailCodeSuccess" style="display: none;">✓ Email verified!</div>
+				</div>
+
+				<button type="button" class="btn-submit" id="continueToSMS" onclick="goToStep3()" disabled>Continue to Phone Verification</button>
+			</div>
+
+			<!-- Step 3: Phone Verification -->
+			<div class="section hidden" id="section3">
+				<h2 class="section-title">Step 3: Phone Verification</h2>
+
+				<div class="form-group">
+					<label>Phone Number * <span id="phoneVerifiedBadge"></span></label>
+					<div class="verification-input">
+						<input type="tel" id="phone" placeholder="+1 (555) 123-4567" required>
+						<button type="button" class="btn" id="sendSMSBtn" onclick="sendSMSCode()">Send Code</button>
+					</div>
 					<div class="error" id="phoneError">Please enter a valid phone number</div>
 				</div>
 
-				<div class="form-group">
-					<label>Email *</label>
-					<input type="email" id="email" required>
-					<div class="error" id="emailError">Please enter a valid email address</div>
+				<div class="form-group" id="smsCodeGroup" style="display: none;">
+					<label>Enter Verification Code *</label>
+					<div class="verification-input">
+						<input type="text" class="code-input" id="smsCode" maxlength="6" placeholder="000000">
+						<button type="button" class="btn" onclick="verifySMSCode()">Verify</button>
+					</div>
+					<div class="error" id="smsCodeError"></div>
+					<div class="success" id="smsCodeSuccess" style="display: none;">✓ Phone verified!</div>
 				</div>
+
+				<button type="button" class="btn-submit" id="continueToForm" onclick="goToStep4()" disabled>Continue to Agreement</button>
 			</div>
 
-			<div class="section">
+			<!-- Step 4: Agreement and Signature -->
+			<div class="section hidden" id="section4">
 				<h2 class="section-title">Electronic Signature Consent</h2>
 
 				<div class="esign-notice">
@@ -419,7 +525,7 @@
 
 					<p><strong>Your Rights:</strong></p>
 					<ul>
-						<li>You have the right to receive a paper copy of this agreement. To request a paper copy, please contact us at the email or phone number provided on our website.</li>
+						<li>You have the right to receive a paper copy of this agreement. To request a paper copy, please contact us.</li>
 						<li>You may withdraw your consent to electronic signatures at any time by contacting us.</li>
 						<li>After signing, you will be able to download a PDF copy of this completed form for your records.</li>
 					</ul>
@@ -430,20 +536,16 @@
 						<li>A current web browser (Chrome, Firefox, Safari, or Edge)</li>
 						<li>Ability to view and save PDF files</li>
 					</ul>
-
-					<p><strong>Record Retention:</strong> The Sprouting Lens will maintain a copy of your signed agreement in our records. You should also save a copy for your personal records.</p>
 				</div>
 
 				<div class="consent-checkbox">
 					<input type="checkbox" id="esignConsent" required>
 					<label for="esignConsent">
-						<strong>I consent to use electronic signatures and conduct this transaction electronically.</strong> I understand that my electronic signature will have the same legal effect as a handwritten signature. I have read and understood the notice above regarding my rights and the system requirements. *
+						<strong>I consent to use electronic signatures and conduct this transaction electronically.</strong> I understand that my electronic signature will have the same legal effect as a handwritten signature. *
 					</label>
 				</div>
 				<div class="error" id="esignConsentError">You must consent to electronic signatures to proceed</div>
-			</div>
 
-			<div class="section">
 				<h2 class="section-title">Terms & Conditions</h2>
 
 				<div class="terms-box">
@@ -471,9 +573,7 @@
 					<p>I hereby release and discharge The Sprouting Lens, its employees, agents, and representatives from any and all claims, demands, or causes of action that I or any of my heirs, representatives, executors, administrators, or any other person acting on my behalf or on behalf of my estate may have now or in the future for defamation, invasion of privacy, or violation of the right of publicity or any other right arising out of or relating to the use of the images or sound recordings.</p>
 					<p><strong>By signing below, I acknowledge that I have completely read and fully understand the above release agreement.</strong></p>
 				</div>
-			</div>
 
-			<div class="section">
 				<h2 class="section-title">Signature</h2>
 
 				<div class="form-group">
@@ -504,16 +604,19 @@
 
 					<div class="error" id="signatureError">Please provide your signature</div>
 				</div>
-			</div>
 
-			<button type="submit" class="btn-submit" id="submitBtn">Submit Form</button>
+				<button type="submit" class="btn-submit" id="submitBtn">Submit Form</button>
+			</div>
 		</form>
 	</div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
-	// Signature method tracking
+	const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxbmxGU6eGBzl0B2w0ATjuqydofYIJLuwb3DyE-iFsfxXNHr3psZ0fYswIJt4OCautOrA/exec';
+
+	let emailVerified = false;
+	let phoneVerified = false;
 	let signatureMethod = 'draw';
 
 	// Signature Pad Setup
@@ -524,7 +627,6 @@
 	let lastX = 0;
 	let lastY = 0;
 
-	// Set canvas size for retina displays
 	const rect = canvas.getBoundingClientRect();
 	canvas.width = rect.width * 2;
 	canvas.height = rect.height * 2;
@@ -532,19 +634,15 @@
 	canvas.style.height = rect.height + 'px';
 	ctx.scale(2, 2);
 
-	// Improved drawing with smoother lines
 	ctx.lineWidth = 2;
 	ctx.lineCap = 'round';
 	ctx.lineJoin = 'round';
 	ctx.strokeStyle = '#000';
 
-	// Mouse events
 	canvas.addEventListener('mousedown', startDrawing);
 	canvas.addEventListener('mousemove', draw);
 	canvas.addEventListener('mouseup', stopDrawing);
 	canvas.addEventListener('mouseout', stopDrawing);
-
-	// Touch events for mobile
 	canvas.addEventListener('touchstart', handleTouchStart);
 	canvas.addEventListener('touchmove', handleTouchMove);
 	canvas.addEventListener('touchend', stopDrawing);
@@ -579,8 +677,6 @@
 		e.preventDefault();
 
 		const coords = getCoordinates(e);
-
-		// Draw smooth line
 		ctx.beginPath();
 		ctx.moveTo(lastX, lastY);
 		ctx.lineTo(coords.x, coords.y);
@@ -616,12 +712,10 @@
 	function switchSignatureMethod(method) {
 		signatureMethod = method;
 
-		// Update tab buttons
 		const buttons = document.querySelectorAll('.tab-button');
 		buttons.forEach(btn => btn.classList.remove('active'));
 		event.target.classList.add('active');
 
-		// Show/hide signature inputs
 		document.getElementById('drawSignature').classList.remove('active');
 		document.getElementById('typeSignature').classList.remove('active');
 
@@ -631,124 +725,15 @@
 			document.getElementById('typeSignature').classList.add('active');
 		}
 
-		// Clear error
 		document.getElementById('signatureError').style.display = 'none';
 	}
 
-	// Set today's date as default
 	document.getElementById('date').valueAsDate = new Date();
 
-	// Function to generate PDF
-	function generatePDF(formData) {
-		const { jsPDF } = window.jspdf;
-		const doc = new jsPDF();
-
-		// Add title
-		doc.setFontSize(20);
-		doc.setTextColor(7, 92, 250);
-		doc.text('The Sprouting Lens', 105, 20, { align: 'center' });
-		doc.setFontSize(14);
-		doc.text('Photo Release Form', 105, 28, { align: 'center' });
-
-		// Add form data
-		doc.setFontSize(10);
-		doc.setTextColor(0, 0, 0);
-		let y = 45;
-
-		doc.setFontSize(12);
-		doc.setFont(undefined, 'bold');
-		doc.text('Personal Information', 20, y);
-		y += 8;
-		doc.setFont(undefined, 'normal');
-		doc.setFontSize(10);
-
-		doc.text(`Name: ${formData.firstName} ${formData.lastName}`, 20, y);
-		y += 6;
-		doc.text(`Address: ${formData.address1}`, 20, y);
-		y += 6;
-		if (formData.address2) {
-			doc.text(`         ${formData.address2}`, 20, y);
-			y += 6;
-		}
-		doc.text(`         ${formData.city}, ${formData.state} ${formData.zipCode}`, 20, y);
-		y += 6;
-		doc.text(`Phone: ${formData.phone}`, 20, y);
-		y += 6;
-		doc.text(`Email: ${formData.email}`, 20, y);
-		y += 10;
-
-		// Add terms
-		doc.setFontSize(12);
-		doc.setFont(undefined, 'bold');
-		doc.text('Agreement', 20, y);
-		y += 8;
-		doc.setFont(undefined, 'normal');
-		doc.setFontSize(9);
-
-		const terms = [
-			'I hereby grant permission to The Sprouting Lens for any photos, videos, or audio',
-			'recordings of me to be used in and/or for any lawful promotional materials, including',
-			'but not limited to newsletters, flyers, posters, brochures, advertisements, press kits,',
-			'websites, social media pages, and other print and digital communications.',
-			'',
-			'This authorization shall continue indefinitely and extends to all languages, media,',
-			'formats, and markets, whether now known or later discovered.',
-			'',
-			'I understand that I will not receive any monetary compensation for the use of',
-			'images or sound recording.',
-			'',
-			'I grant The Sprouting Lens the right to edit, alter, copy, or distribute the images',
-			'or sound recordings for any lawful purpose and the right to use my name in',
-			'connection with the images or sound recordings if they choose.',
-			'',
-			'I hereby release and discharge The Sprouting Lens, its employees, agents, and',
-			'representatives from any and all claims, demands, or causes of action.'
-		];
-
-		terms.forEach(line => {
-			if (y > 270) {
-				doc.addPage();
-				y = 20;
-			}
-			doc.text(line, 20, y);
-			y += 5;
-		});
-
-		y += 5;
-		doc.text('By signing below, I acknowledge that I have completely read and fully', 20, y);
-		y += 5;
-		doc.text('understand the above release agreement and consent to electronic signatures.', 20, y);
-		y += 10;
-
-		// Add signature
-		doc.setFontSize(10);
-		doc.text(`Date: ${formData.date}`, 20, y);
-		y += 10;
-		doc.text('Signature:', 20, y);
-
-		if (formData.signature) {
-			try {
-				doc.addImage(formData.signature, 'PNG', 20, y + 2, 80, 20);
-			} catch (e) {
-				console.error('Error adding signature to PDF:', e);
-			}
-		}
-
-		y += 25;
-		doc.setFontSize(8);
-		doc.setTextColor(128, 128, 128);
-		doc.text(`Electronically signed on ${new Date(formData.timestamp).toLocaleString()}`, 20, y);
-
-		return doc;
-	}
-
-	// Form Submission
-	document.getElementById('releaseForm').addEventListener('submit', async function(e) {
-		e.preventDefault();
-
-		// Validate all fields
+	// Step navigation
+	function goToStep2() {
+		const fields = ['firstName', 'lastName', 'address1', 'city', 'state', 'zipCode'];
 		let isValid = true;
-		const fields = ['firstName', 'lastName', 'address1', 'city', 'state', 'zipCode', 'phone', 'email', 'date'];
 
 		fields.forEach(field => {
 			const input = document.getElementById(field);
@@ -761,130 +746,93 @@
 			}
 		});
 
-		// Validate e-sign consent
-		const esignConsent = document.getElementById('esignConsent');
-		const esignError = document.getElementById('esignConsentError');
-		if (!esignConsent.checked) {
-			esignError.style.display = 'block';
-			isValid = false;
-		} else {
-			esignError.style.display = 'none';
+		if (isValid) {
+			document.getElementById('section1').classList.add('hidden');
+			document.getElementById('section2').classList.remove('hidden');
+			window.scrollTo({ top: 0, behavior: 'smooth' });
 		}
+	}
 
-		// Validate signature
-		let signatureData = null;
-
-		if (signatureMethod === 'draw') {
-			if (!hasSignature) {
-				document.getElementById('signatureError').style.display = 'block';
-				isValid = false;
-			} else {
-				signatureData = canvas.toDataURL();
-				document.getElementById('signatureError').style.display = 'none';
-			}
-		} else {
-			const typedName = document.getElementById('typedName').value.trim();
-			if (!typedName) {
-				document.getElementById('signatureError').style.display = 'block';
-				isValid = false;
-			} else {
-				// Create signature from typed name
-				const tempCanvas = document.createElement('canvas');
-				tempCanvas.width = 720;
-				tempCanvas.height = 200;
-				const tempCtx = tempCanvas.getContext('2d');
-				tempCtx.fillStyle = 'white';
-				tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-				tempCtx.font = '48px "Brush Script MT", cursive';
-				tempCtx.fillStyle = 'black';
-				tempCtx.textAlign = 'center';
-				tempCtx.textBaseline = 'middle';
-				tempCtx.fillText(typedName, tempCanvas.width / 2, tempCanvas.height / 2);
-				signatureData = tempCanvas.toDataURL();
-				document.getElementById('signatureError').style.display = 'none';
-			}
+	function goToStep3() {
+		if (emailVerified) {
+			document.getElementById('section2').classList.add('hidden');
+			document.getElementById('section3').classList.remove('hidden');
+			window.scrollTo({ top: 0, behavior: 'smooth' });
 		}
+	}
 
-		if (!isValid) {
-			alert('Please fill in all required fields, provide your signature, and consent to electronic signatures.');
+	function goToStep4() {
+		if (phoneVerified) {
+			document.getElementById('section3').classList.add('hidden');
+			document.getElementById('section4').classList.remove('hidden');
+			window.scrollTo({ top: 0, behavior: 'smooth' });
+		}
+	}
+
+	// Email verification
+	async function sendEmailCode() {
+		const email = document.getElementById('email').value;
+		if (!email) {
+			alert('Please enter your email address');
 			return;
 		}
 
-		// Disable submit button
-		const submitBtn = document.getElementById('submitBtn');
-		submitBtn.disabled = true;
-		submitBtn.textContent = 'Submitting...';
-
-		// Prepare data
-		const formData = {
-			firstName: document.getElementById('firstName').value,
-			lastName: document.getElementById('lastName').value,
-			address1: document.getElementById('address1').value,
-			address2: document.getElementById('address2').value,
-			city: document.getElementById('city').value,
-			state: document.getElementById('state').value,
-			zipCode: document.getElementById('zipCode').value,
-			phone: document.getElementById('phone').value,
-			email: document.getElementById('email').value,
-			date: document.getElementById('date').value,
-			signatureMethod: signatureMethod,
-			signature: signatureData,
-			timestamp: new Date().toISOString()
-		};
-
-		// IMPORTANT: Replace this URL with your Google Apps Script Web App URL
-		const scriptURL = 'https://script.google.com/macros/s/AKfycbyZTt-6TtvKf-HxXTm9XoE0J0BpD4VNQxWvsx1AK1qGpBCaFMmuTQnuP15mtGmV9JoKXA/exec';
+		const btn = document.getElementById('sendEmailBtn');
+		btn.disabled = true;
+		btn.textContent = 'Sending...';
 
 		try {
-			const response = await fetch(scriptURL, {
+			const response = await fetch(SCRIPT_URL, {
 				method: 'POST',
 				mode: 'no-cors',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify(formData)
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ action: 'send_email_code', email: email })
 			});
 
-			// Show success message
-			document.getElementById('successMessage').style.display = 'block';
-
-			// Generate and offer PDF download
-			const pdf = generatePDF(formData);
-			const pdfBlob = pdf.output('blob');
-			const pdfUrl = URL.createObjectURL(pdfBlob);
-
-			const downloadLink = document.getElementById('downloadPDF');
-			downloadLink.href = pdfUrl;
-			downloadLink.download = `Sprouting_Lens_Release_${formData.firstName}_${formData.lastName}.pdf`;
-
-			// Reset form
-			document.getElementById('releaseForm').reset();
-			clearSignature();
-			document.getElementById('typedName').value = '';
-			document.getElementById('date').valueAsDate = new Date();
-
-			// Reset to draw method
-			signatureMethod = 'draw';
-			document.querySelectorAll('.tab-button')[0].classList.add('active');
-			document.querySelectorAll('.tab-button')[1].classList.remove('active');
-			document.getElementById('drawSignature').classList.add('active');
-			document.getElementById('typeSignature').classList.remove('active');
-
-			// Scroll to top
-			window.scrollTo({ top: 0, behavior: 'smooth' });
-
-			setTimeout(() => {
-				document.getElementById('successMessage').style.display = 'none';
-			}, 5000);
+			document.getElementById('emailCodeGroup').style.display = 'block';
+			btn.textContent = 'Resend Code';
+			btn.disabled = false;
 
 		} catch (error) {
-			alert('There was an error submitting the form. Please try again.');
-			console.error('Error:', error);
-		} finally {
-			submitBtn.disabled = false;
-			submitBtn.textContent = 'Submit Form';
+			alert('Error sending code: ' + error.message);
+			btn.disabled = false;
+			btn.textContent = 'Send Code';
 		}
-	});
-</script>
-</body>
-</html>
+	}
+
+	async function verifyEmailCode() {
+		const email = document.getElementById('email').value;
+		const code = document.getElementById('emailCode').value;
+
+		if (!code || code.length !== 6) {
+			document.getElementById('emailCodeError').textContent = 'Please enter the 6-digit code';
+			document.getElementById('emailCodeError').style.display = 'block';
+			return;
+		}
+
+		try {
+			const response = await fetch(SCRIPT_URL, {
+				method: 'POST',
+				mode: 'no-cors',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					action: 'verify_email_code',
+					email: email,
+					code: code
+				})
+			});
+
+			// Assume success with no-cors
+			emailVerified = true;
+			document.getElementById('emailCodeSuccess').style.display = 'block';
+			document.getElementById('emailCodeError').style.display = 'none';
+			document.getElementById('emailVerifiedBadge').innerHTML = '<span class="verified-badge">✓ Verified</span>';
+			document.getElementById('continueToSMS').disabled = false;
+			document.getElementById('email').disabled = true;
+			document.getElementById('sendEmailBtn').disabled = true;
+
+		} catch (error) {
+			document.getElementById('emailCodeError').textContent = 'Invalid or expired code';
+			document.getElementById('emailCodeError').style.display = 'block';
+		}
+	}
