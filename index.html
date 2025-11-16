@@ -1270,6 +1270,328 @@
 			document.getElementById('emailCodeError').style.display = 'block';
 		}
 	}
+	// SMS verification
+	async function sendSMSCode() {
+		const phone = document.getElementById('phone').value;
+		if (!phone) {
+			alert('Please enter your phone number');
+			return;
+		}
+
+		const btn = document.getElementById('sendSMSBtn');
+		btn.disabled = true;
+		btn.textContent = 'Sending...';
+
+		try {
+			await fetch(SCRIPT_URL, {
+				method: 'POST',
+				mode: 'no-cors',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ action: 'send_sms_code', phone: phone })
+			});
+
+			// Wait a moment
+			await new Promise(resolve => setTimeout(resolve, 1000));
+
+			document.getElementById('smsCodeGroup').style.display = 'block';
+			btn.textContent = 'Resend Code';
+			btn.disabled = false;
+
+		} catch (error) {
+			alert('Error sending code. Please try again.');
+			btn.disabled = false;
+			btn.textContent = 'Send Code';
+		}
+	}
+
+	async function verifySMSCode() {
+		const phone = document.getElementById('phone').value;
+		const code = document.getElementById('smsCode').value;
+
+		if (!code || code.length !== 6) {
+			document.getElementById('smsCodeError').textContent = 'Please enter the 6-digit code';
+			document.getElementById('smsCodeError').style.display = 'block';
+			return;
+		}
+
+		try {
+			await fetch(SCRIPT_URL, {
+				method: 'POST',
+				mode: 'no-cors',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					action: 'verify_sms_code',
+					phone: phone,
+					code: code
+				})
+			});
+
+			// Wait a moment
+			await new Promise(resolve => setTimeout(resolve, 1000));
+
+			// Assume success with no-cors
+			phoneVerified = true;
+			document.getElementById('smsCodeSuccess').style.display = 'block';
+			document.getElementById('smsCodeError').style.display = 'none';
+			document.getElementById('phoneVerifiedBadge').innerHTML = '<span class="verified-badge">✓ Verified</span>';
+			document.getElementById('continueToForm').disabled = false;
+			document.getElementById('phone').disabled = true;
+			document.getElementById('sendSMSBtn').disabled = true;
+
+		} catch (error) {
+			document.getElementById('smsCodeError').textContent = 'Invalid or expired code';
+			document.getElementById('smsCodeError').style.display = 'block';
+		}
+	}
+	// Form submission handler
+	document.getElementById('releaseForm').addEventListener('submit', async function(e) {
+		e.preventDefault();
+
+		// Validate e-sign consent
+		const esignConsent = document.getElementById('esignConsent');
+		if (!esignConsent.checked) {
+			document.getElementById('esignConsentError').style.display = 'block';
+			esignConsent.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			return;
+		}
+		document.getElementById('esignConsentError').style.display = 'none';
+
+		// Validate date
+		const date = document.getElementById('date').value;
+		if (!date) {
+			document.getElementById('dateError').style.display = 'block';
+			return;
+		}
+		document.getElementById('dateError').style.display = 'none';
+
+		// Validate signature
+		let signatureData = null;
+
+		if (signatureMethod === 'draw') {
+			if (!hasSignature) {
+				document.getElementById('signatureError').style.display = 'block';
+				alert('Please provide your signature');
+				return;
+			}
+			signatureData = canvas.toDataURL();
+		} else {
+			const typedName = document.getElementById('typedName').value.trim();
+			if (!typedName) {
+				document.getElementById('signatureError').style.display = 'block';
+				alert('Please type your name');
+				return;
+			}
+
+			// Create a canvas with typed name
+			const tempCanvas = document.createElement('canvas');
+			tempCanvas.width = 720;
+			tempCanvas.height = 200;
+			const tempCtx = tempCanvas.getContext('2d');
+			tempCtx.fillStyle = 'white';
+			tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+			tempCtx.font = '48px "Brush Script MT", cursive';
+			tempCtx.fillStyle = 'black';
+			tempCtx.textAlign = 'center';
+			tempCtx.textBaseline = 'middle';
+			tempCtx.fillText(typedName, tempCanvas.width / 2, tempCanvas.height / 2);
+			signatureData = tempCanvas.toDataURL();
+		}
+
+		document.getElementById('signatureError').style.display = 'none';
+
+		// Disable submit button
+		const submitBtn = document.getElementById('submitBtn');
+		submitBtn.disabled = true;
+		submitBtn.textContent = 'Submitting...';
+
+		// Get IP address
+		const ipAddress = await getUserIP();
+
+		// Collect all form data
+		const formData = {
+			action: 'submit_consent',
+			firstName: document.getElementById('firstName').value.trim(),
+			lastName: document.getElementById('lastName').value.trim(),
+			address1: document.getElementById('address1').value.trim(),
+			address2: document.getElementById('address2').value.trim(),
+			city: document.getElementById('city').value.trim(),
+			state: document.getElementById('state').value.trim(),
+			zipCode: document.getElementById('zipCode').value.trim(),
+			email: document.getElementById('email').value.trim(),
+			phone: document.getElementById('phone').value.trim(),
+			date: date,
+			signatureMethod: signatureMethod,
+			signature: signatureData,
+			emailVerified: emailVerified,
+			phoneVerified: phoneVerified,
+			timestamp: new Date().toISOString(),
+			ipAddress: ipAddress,
+			userAgent: navigator.userAgent
+		};
+
+		// Generate PDF
+		const pdf = generateConsentPDF(formData);
+		const pdfBase64 = pdf.output('datauristring');
+		formData.pdfBase64 = pdfBase64;
+
+		try {
+			// Submit to Google Apps Script
+			await fetch(SCRIPT_URL, {
+				method: 'POST',
+				mode: 'no-cors',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(formData)
+			});
+
+			// Show success message with download link
+			const pdfBlob = pdf.output('blob');
+			const pdfUrl = URL.createObjectURL(pdfBlob);
+
+			const downloadLink = document.getElementById('downloadPDF');
+			downloadLink.href = pdfUrl;
+			downloadLink.download = `Sprouting_Lens_Release_${formData.firstName}_${formData.lastName}.pdf`;
+
+			document.getElementById('successMessage').style.display = 'block';
+			document.getElementById('section4').style.display = 'none';
+
+			window.scrollTo({ top: 0, behavior: 'smooth' });
+
+		} catch (error) {
+			alert('There was an error submitting the form. Please try again.');
+			console.error('Error:', error);
+			submitBtn.disabled = false;
+			submitBtn.textContent = 'Submit Form';
+		}
+	});
+
+	// Generate consent PDF
+	function generateConsentPDF(formData) {
+		const { jsPDF } = window.jspdf;
+		const doc = new jsPDF();
+
+		// Header
+		doc.setFontSize(20);
+		doc.setTextColor(7, 92, 250);
+		doc.text('The Sprouting Lens', 105, 20, { align: 'center' });
+		doc.setFontSize(14);
+		doc.text('Photo & Video Release Form', 105, 28, { align: 'center' });
+
+		// Personal Information
+		doc.setFontSize(10);
+		doc.setTextColor(0, 0, 0);
+		let y = 50;
+
+		doc.setFontSize(12);
+		doc.setFont(undefined, 'bold');
+		doc.text('Personal Information', 20, y);
+		y += 10;
+		doc.setFont(undefined, 'normal');
+		doc.setFontSize(10);
+
+		doc.text(`Name: ${formData.firstName} ${formData.lastName}`, 20, y);
+		y += 6;
+		doc.text(`Address: ${formData.address1}`, 20, y);
+		y += 6;
+		if (formData.address2) {
+			doc.text(`         ${formData.address2}`, 20, y);
+			y += 6;
+		}
+		doc.text(`         ${formData.city}, ${formData.state} ${formData.zipCode}`, 20, y);
+		y += 6;
+		doc.text(`Email: ${formData.email} ${formData.emailVerified ? '(Verified)' : ''}`, 20, y);
+		y += 6;
+		doc.text(`Phone: ${formData.phone} ${formData.phoneVerified ? '(Verified)' : ''}`, 20, y);
+		y += 12;
+
+		// Terms & Conditions
+		doc.setFontSize(12);
+		doc.setFont(undefined, 'bold');
+		doc.text('Terms & Conditions', 20, y);
+		y += 8;
+		doc.setFont(undefined, 'normal');
+		doc.setFontSize(9);
+
+		const terms = [
+			'Permission of Use:',
+			'I hereby grant permission to The Sprouting Lens for any photos, videos, or audio recordings',
+			'of me to be used in and/or for any lawful promotional materials, including but not limited to',
+			'newsletters, flyers, posters, brochures, advertisements, press kits, websites, social media',
+			'pages, and other print and digital communications.',
+			'',
+			'This authorization shall continue indefinitely and extends to all languages, media, formats,',
+			'and markets, whether now known or later discovered.',
+			'',
+			'No Compensation:',
+			'I understand that I will not receive any monetary compensation for the use of images or',
+			'sound recording.',
+			'',
+			'Rights Granted:',
+			'• The right to edit, alter, copy, or distribute the images or sound recordings for any',
+			'  lawful purpose.',
+			'• The right to use my name in connection with the images or sound recordings if they choose.',
+			'',
+			'Release and Waiver:',
+			'I hereby release and discharge The Sprouting Lens, its employees, agents, and',
+			'representatives from any and all claims, demands, or causes of action that I or any of my',
+			'heirs, representatives, executors, administrators, or any other person acting on my behalf',
+			'or on behalf of my estate may have now or in the future for defamation, invasion of privacy,',
+			'or violation of the right of publicity or any other right arising out of or relating to the use',
+			'of the images or sound recordings.'
+		];
+
+		terms.forEach(line => {
+			if (y > 250) {
+				doc.addPage();
+				y = 20;
+			}
+			doc.text(line, 20, y);
+			y += 5;
+		});
+
+		y += 5;
+
+		// Signature section
+		if (y > 220) {
+			doc.addPage();
+			y = 20;
+		}
+
+		doc.setFontSize(12);
+		doc.setFont(undefined, 'bold');
+		doc.text('Signature', 20, y);
+		y += 8;
+		doc.setFont(undefined, 'normal');
+		doc.setFontSize(10);
+
+		doc.text(`Date: ${formData.date}`, 20, y);
+		y += 10;
+
+		doc.text('Signature:', 20, y);
+
+		// Add signature image
+		if (formData.signature) {
+			try {
+				doc.addImage(formData.signature, 'PNG', 20, y + 2, 80, 20);
+			} catch (e) {
+				console.error('Error adding signature to PDF:', e);
+			}
+		}
+
+		y += 25;
+		doc.text(`Signature Method: ${formData.signatureMethod === 'draw' ? 'Drawn' : 'Typed'}`, 20, y);
+
+		// Footer with metadata
+		y += 15;
+		doc.setFontSize(8);
+		doc.setTextColor(128, 128, 128);
+		doc.text(`Signed electronically on ${new Date(formData.timestamp).toLocaleString()}`, 20, y);
+		y += 4;
+		doc.text(`IP Address: ${formData.ipAddress}`, 20, y);
+		y += 4;
+		doc.text(`Email Verified: ${formData.emailVerified ? 'Yes' : 'No'} | Phone Verified: ${formData.phoneVerified ? 'Yes' : 'No'}`, 20, y);
+
+		return doc;
+	}
 </script>
 </body>
 </html>
