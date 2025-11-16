@@ -28,7 +28,7 @@
 		}
 
 		.header {
-			background: linear-gradient(135deg, #288B22 0%, #288B22 100%);
+			background: linear-gradient(135deg, #075CFA 0%, #0448B8 100%);
 			color: white;
 			padding: 40px;
 			text-align: center;
@@ -411,6 +411,100 @@
 		</div>
 
 		<form id="releaseForm">
+			<!-- Step 0: Consent Choice -->
+			<div class="section" id="section0">
+				<h2 class="section-title">Photo & Video Release Consent</h2>
+
+				<div class="terms-box">
+					<p style="font-size: 1.1em; margin-bottom: 20px;">
+						<strong>The Sprouting Lens would like permission to use photos and videos taken of you for promotional purposes.</strong>
+					</p>
+					<p>This includes use in newsletters, flyers, posters, brochures, advertisements, websites, social media, and other marketing materials.</p>
+				</div>
+
+				<div class="form-group">
+					<label style="font-size: 1.2em; margin-bottom: 15px;">Do you consent to The Sprouting Lens using photos and videos of you?</label>
+
+					<div style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
+						<label style="display: flex; align-items: center; padding: 20px; background: #f8f9fa; border-radius: 8px; cursor: pointer; border: 2px solid #e0e0e0; transition: all 0.3s;">
+							<input type="radio" name="consentChoice" value="accept" style="width: 24px; height: 24px; margin-right: 15px; cursor: pointer;">
+							<div>
+								<strong style="font-size: 1.1em; color: #28a745;">Yes, I consent</strong>
+								<p style="margin: 5px 0 0 0; font-size: 0.9em; color: #666; font-weight: normal;">I agree to allow The Sprouting Lens to use my photos/videos</p>
+							</div>
+						</label>
+
+						<label style="display: flex; align-items: center; padding: 20px; background: #f8f9fa; border-radius: 8px; cursor: pointer; border: 2px solid #e0e0e0; transition: all 0.3s;">
+							<input type="radio" name="consentChoice" value="decline" style="width: 24px; height: 24px; margin-right: 15px; cursor: pointer;">
+							<div>
+								<strong style="font-size: 1.1em; color: #dc3545;">No, I do not consent</strong>
+								<p style="margin: 5px 0 0 0; font-size: 0.9em; color: #666; font-weight: normal;">I do not wish to have my photos/videos used</p>
+							</div>
+						</label>
+					</div>
+					<div class="error" id="consentChoiceError" style="margin-top: 10px;">Please select an option</div>
+				</div>
+
+				<button type="button" class="btn-submit" onclick="handleConsentChoice()">Continue</button>
+			</div>
+
+			<!-- Decline Form (if user chooses No) -->
+			<div class="section hidden" id="declineSection">
+				<h2 class="section-title">Photo Release Declination Form</h2>
+
+				<div class="terms-box" style="border-left-color: #dc3545;">
+					<p><strong>You have chosen NOT to consent to the use of your photos/videos.</strong></p>
+					<p>Please complete this form to document your decision. We respect your choice and will not use any photos or videos of you for promotional purposes.</p>
+				</div>
+
+				<div class="name-group">
+					<div class="form-group">
+						<label>First Name *</label>
+						<input type="text" id="declineFirstName" required>
+					</div>
+
+					<div class="form-group">
+						<label>Last Name *</label>
+						<input type="text" id="declineLastName" required>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label>Email *</label>
+					<input type="email" id="declineEmail" required>
+				</div>
+
+				<div class="form-group">
+					<label>Date *</label>
+					<input type="date" id="declineDate" required>
+				</div>
+
+				<div class="form-group">
+					<label>Signature Method *</label>
+					<div class="option-tabs">
+						<button type="button" class="tab-button active" onclick="switchDeclineSignatureMethod('draw')">Draw Signature</button>
+						<button type="button" class="tab-button" onclick="switchDeclineSignatureMethod('type')">Type Name</button>
+					</div>
+
+					<div id="drawDeclineSignature" class="signature-input active">
+						<label>Sign below using your mouse or finger</label>
+						<canvas id="declineSignaturePad" class="signature-pad" width="720" height="200"></canvas>
+						<div class="signature-controls">
+							<button type="button" class="btn-clear" onclick="clearDeclineSignature()">Clear Signature</button>
+						</div>
+					</div>
+
+					<div id="typeDeclineSignature" class="signature-input">
+						<label>Type your full name as it appears above</label>
+						<input type="text" id="declineTypedName" class="typed-signature" placeholder="Type your full name here">
+					</div>
+
+					<div class="error" id="declineSignatureError">Please provide your signature</div>
+				</div>
+
+				<button type="button" class="btn-submit" onclick="submitDeclineForm()">Submit Declination</button>
+			</div>
+
 			<!-- Step 1: Personal Information -->
 			<div class="section" id="section1">
 				<h2 class="section-title">Step 1: Personal Information</h2>
@@ -618,6 +712,318 @@
 	let emailVerified = false;
 	let phoneVerified = false;
 	let signatureMethod = 'draw';
+	let declineSignatureMethod = 'draw';
+
+	// Decline signature pad setup
+	let declineCanvas, declineCtx;
+	let isDrawingDecline = false;
+	let hasDeclineSignature = false;
+	let lastDeclineX = 0;
+	let lastDeclineY = 0;
+
+	function initializeDeclineSignaturePad() {
+		declineCanvas = document.getElementById('declineSignaturePad');
+		if (!declineCanvas) return;
+
+		declineCtx = declineCanvas.getContext('2d');
+
+		const rect = declineCanvas.getBoundingClientRect();
+		declineCanvas.width = rect.width * 2;
+		declineCanvas.height = rect.height * 2;
+		declineCanvas.style.width = rect.width + 'px';
+		declineCanvas.style.height = rect.height + 'px';
+		declineCtx.scale(2, 2);
+
+		declineCtx.lineWidth = 2;
+		declineCtx.lineCap = 'round';
+		declineCtx.lineJoin = 'round';
+		declineCtx.strokeStyle = '#000';
+
+		declineCanvas.addEventListener('mousedown', startDrawingDecline);
+		declineCanvas.addEventListener('mousemove', drawDecline);
+		declineCanvas.addEventListener('mouseup', stopDrawingDecline);
+		declineCanvas.addEventListener('mouseout', stopDrawingDecline);
+		declineCanvas.addEventListener('touchstart', handleTouchStartDecline);
+		declineCanvas.addEventListener('touchmove', handleTouchMoveDecline);
+		declineCanvas.addEventListener('touchend', stopDrawingDecline);
+	}
+
+	function startDrawingDecline(e) {
+		e.preventDefault();
+		isDrawingDecline = true;
+		hasDeclineSignature = true;
+		const coords = getCoordinatesDecline(e);
+		lastDeclineX = coords.x;
+		lastDeclineY = coords.y;
+		declineCtx.beginPath();
+		declineCtx.moveTo(lastDeclineX, lastDeclineY);
+	}
+
+	function drawDecline(e) {
+		if (!isDrawingDecline) return;
+		e.preventDefault();
+
+		const coords = getCoordinatesDecline(e);
+		declineCtx.beginPath();
+		declineCtx.moveTo(lastDeclineX, lastDeclineY);
+		declineCtx.lineTo(coords.x, coords.y);
+		declineCtx.stroke();
+
+		lastDeclineX = coords.x;
+		lastDeclineY = coords.y;
+	}
+
+	function stopDrawingDecline(e) {
+		if (isDrawingDecline) {
+			e.preventDefault();
+		}
+		isDrawingDecline = false;
+	}
+
+	function getCoordinatesDecline(e) {
+		const rect = declineCanvas.getBoundingClientRect();
+		if (e.touches) {
+			return {
+				x: e.touches[0].clientX - rect.left,
+				y: e.touches[0].clientY - rect.top
+			};
+		}
+		return {
+			x: e.clientX - rect.left,
+			y: e.clientY - rect.top
+		};
+	}
+
+	function handleTouchStartDecline(e) {
+		e.preventDefault();
+		startDrawingDecline(e);
+	}
+
+	function handleTouchMoveDecline(e) {
+		e.preventDefault();
+		drawDecline(e);
+	}
+
+	function clearDeclineSignature() {
+		if (declineCtx) {
+			declineCtx.clearRect(0, 0, declineCanvas.width, declineCanvas.height);
+			hasDeclineSignature = false;
+			document.getElementById('declineSignatureError').style.display = 'none';
+		}
+	}
+
+	function switchDeclineSignatureMethod(method) {
+		declineSignatureMethod = method;
+
+		const buttons = document.querySelectorAll('#declineSection .tab-button');
+		buttons.forEach(btn => btn.classList.remove('active'));
+		event.target.classList.add('active');
+
+		document.getElementById('drawDeclineSignature').classList.remove('active');
+		document.getElementById('typeDeclineSignature').classList.remove('active');
+
+		if (method === 'draw') {
+			document.getElementById('drawDeclineSignature').classList.add('active');
+		} else {
+			document.getElementById('typeDeclineSignature').classList.add('active');
+		}
+
+		document.getElementById('declineSignatureError').style.display = 'none';
+	}
+
+	// Handle consent choice
+	function handleConsentChoice() {
+		const choice = document.querySelector('input[name="consentChoice"]:checked');
+
+		if (!choice) {
+			document.getElementById('consentChoiceError').style.display = 'block';
+			return;
+		}
+
+		document.getElementById('consentChoiceError').style.display = 'none';
+		document.getElementById('section0').classList.add('hidden');
+
+		if (choice.value === 'decline') {
+			document.getElementById('declineSection').classList.remove('hidden');
+			document.getElementById('declineDate').valueAsDate = new Date();
+			// Initialize decline signature pad after it's visible
+			setTimeout(initializeDeclineSignaturePad, 100);
+		} else {
+			document.getElementById('section1').classList.remove('hidden');
+		}
+
+		window.scrollTo({ top: 0, behavior: 'smooth' });
+	}
+
+	// Submit decline form
+	async function submitDeclineForm() {
+		const firstName = document.getElementById('declineFirstName').value.trim();
+		const lastName = document.getElementById('declineLastName').value.trim();
+		const email = document.getElementById('declineEmail').value.trim();
+		const date = document.getElementById('declineDate').value;
+
+		if (!firstName || !lastName || !email || !date) {
+			alert('Please fill in all required fields.');
+			return;
+		}
+
+		let signatureData = null;
+
+		if (declineSignatureMethod === 'draw') {
+			if (!hasDeclineSignature) {
+				document.getElementById('declineSignatureError').style.display = 'block';
+				alert('Please provide your signature.');
+				return;
+			} else {
+				signatureData = declineCanvas.toDataURL();
+				document.getElementById('declineSignatureError').style.display = 'none';
+			}
+		} else {
+			const typedName = document.getElementById('declineTypedName').value.trim();
+			if (!typedName) {
+				document.getElementById('declineSignatureError').style.display = 'block';
+				alert('Please type your name.');
+				return;
+			} else {
+				const tempCanvas = document.createElement('canvas');
+				tempCanvas.width = 720;
+				tempCanvas.height = 200;
+				const tempCtx = tempCanvas.getContext('2d');
+				tempCtx.fillStyle = 'white';
+				tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+				tempCtx.font = '48px "Brush Script MT", cursive';
+				tempCtx.fillStyle = 'black';
+				tempCtx.textAlign = 'center';
+				tempCtx.textBaseline = 'middle';
+				tempCtx.fillText(typedName, tempCanvas.width / 2, tempCanvas.height / 2);
+				signatureData = tempCanvas.toDataURL();
+				document.getElementById('declineSignatureError').style.display = 'none';
+			}
+		}
+
+		const ipAddress = await getUserIP();
+
+		const formData = {
+			action: 'submit_decline',
+			firstName: firstName,
+			lastName: lastName,
+			email: email,
+			date: date,
+			signatureMethod: declineSignatureMethod,
+			signature: signatureData,
+			timestamp: new Date().toISOString(),
+			ipAddress: ipAddress,
+			userAgent: navigator.userAgent
+		};
+
+		// Generate decline PDF
+		const pdf = generateDeclinePDF(formData);
+		const pdfBase64 = pdf.output('datauristring');
+		formData.pdfBase64 = pdfBase64;
+
+		try {
+			await fetch(SCRIPT_URL, {
+				method: 'POST',
+				mode: 'no-cors',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(formData)
+			});
+
+			// Show success and offer download
+			const pdfBlob = pdf.output('blob');
+			const pdfUrl = URL.createObjectURL(pdfBlob);
+
+			document.getElementById('successMessage').innerHTML = `
+                    ✓ Thank you. Your declination has been recorded.
+                    <br>
+                    <a href="${pdfUrl}" download="Sprouting_Lens_Declination_${firstName}_${lastName}.pdf" class="download-link">Download Your Declination Form (PDF)</a>
+                `;
+			document.getElementById('successMessage').style.display = 'block';
+			document.getElementById('declineSection').style.display = 'none';
+
+			window.scrollTo({ top: 0, behavior: 'smooth' });
+
+		} catch (error) {
+			alert('There was an error submitting the form. Please try again.');
+			console.error('Error:', error);
+		}
+	}
+
+	// Generate decline PDF
+	function generateDeclinePDF(formData) {
+		const { jsPDF } = window.jspdf;
+		const doc = new jsPDF();
+
+		doc.setFontSize(20);
+		doc.setTextColor(7, 92, 250);
+		doc.text('The Sprouting Lens', 105, 20, { align: 'center' });
+		doc.setFontSize(14);
+		doc.text('Photo Release Declination Form', 105, 28, { align: 'center' });
+
+		doc.setFontSize(10);
+		doc.setTextColor(0, 0, 0);
+		let y = 50;
+
+		doc.setFontSize(12);
+		doc.setFont(undefined, 'bold');
+		doc.text('NOTICE OF NON-CONSENT', 20, y);
+		y += 10;
+		doc.setFont(undefined, 'normal');
+		doc.setFontSize(10);
+
+		doc.text(`Name: ${formData.firstName} ${formData.lastName}`, 20, y);
+		y += 8;
+		doc.text(`Email: ${formData.email}`, 20, y);
+		y += 8;
+		doc.text(`Date: ${formData.date}`, 20, y);
+		y += 15;
+
+		doc.setFontSize(11);
+		doc.setFont(undefined, 'bold');
+		doc.text('Statement of Non-Consent:', 20, y);
+		y += 8;
+		doc.setFont(undefined, 'normal');
+		doc.setFontSize(10);
+
+		const statement = [
+			'I, the undersigned, hereby formally decline to grant permission to The Sprouting Lens',
+			'to use any photographs, videos, or audio recordings of me for promotional or marketing',
+			'purposes.',
+			'',
+			'I do NOT consent to the use of my image, likeness, voice, or any recordings of me in',
+			'newsletters, flyers, posters, brochures, advertisements, press kits, websites, social',
+			'media pages, or any other print or digital communications.',
+			'',
+			'This declination is made freely and voluntarily. I understand that The Sprouting Lens',
+			'will respect this decision and will not use any media containing my image for',
+			'promotional purposes.'
+		];
+
+		statement.forEach(line => {
+			doc.text(line, 20, y);
+			y += 6;
+		});
+
+		y += 10;
+		doc.text('Signature:', 20, y);
+
+		if (formData.signature) {
+			try {
+				doc.addImage(formData.signature, 'PNG', 20, y + 2, 80, 20);
+			} catch (e) {
+				console.error('Error adding signature to PDF:', e);
+			}
+		}
+
+		y += 30;
+		doc.setFontSize(8);
+		doc.setTextColor(128, 128, 128);
+		doc.text(`Signed electronically on ${new Date(formData.timestamp).toLocaleString()}`, 20, y);
+		y += 4;
+		doc.text(`IP Address: ${formData.ipAddress}`, 20, y);
+
+		return doc;
+	}
 
 	// Signature Pad Setup
 	const canvas = document.getElementById('signaturePad');
@@ -836,3 +1242,6 @@
 			document.getElementById('emailCodeError').style.display = 'block';
 		}
 	}
+</script>
+</body>
+</html>
