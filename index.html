@@ -1276,9 +1276,10 @@
 			return;
 		}
 
-		const btn = document.getElementById('sendSMSBtn');
+		const btn = document.getElementById('phone');
 		btn.disabled = true;
 		btn.textContent = 'Sending...';
+		+
 
 		try {
 			await fetch(SCRIPT_URL, {
