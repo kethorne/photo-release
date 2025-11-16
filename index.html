@@ -418,16 +418,17 @@
 				<div class="terms-box">
 					<p style="font-size: 1.1em; margin-bottom: 20px;">
 						<strong>The Sprouting Lens would like permission to
-							use photos, videos, and audio recordings taken of
-							you
-							for promotional
+							use photos, videos and audio recordings taken of
+							you for promotional
 							purposes.</strong>
 					</p>
 					<p>This includes use in newsletters, flyers, posters, brochures, advertisements, websites, social media, and other marketing materials.</p>
 				</div>
 
 				<div class="form-group">
-					<label style="font-size: 1.2em; margin-bottom: 15px;">Do you consent to The Sprouting Lens using photos and videos of you?</label>
+					<label style="font-size: 1.2em; margin-bottom: 15px;">Do
+						you consent to The Sprouting Lens using photos,
+						videos, and audio recordings of you?</label>
 
 					<div style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
 						<label style="display: flex; align-items: center; padding: 20px; background: #f8f9fa; border-radius: 8px; cursor: pointer; border: 2px solid #e0e0e0; transition: all 0.3s;">
@@ -464,33 +465,34 @@
 
 				<div class="terms-box" style="border-left-color: #dc3545;">
 					<p><strong>You have chosen NOT to consent to the use of your photos/videos.</strong></p>
-					<p>Please complete this form to document your decision. We respect your choice and will not use any photos or videos of you for promotional purposes.</p>
+					<p>Please complete this brief form to document your decision. We respect your choice and will not use any photos or videos of you for promotional purposes.</p>
 				</div>
 
 				<div class="name-group">
 					<div class="form-group">
 						<label>First Name *</label>
-						<input type="text" id="declineFirstName" required>
+						<input type="text" id="declineFirstName">
 					</div>
 
 					<div class="form-group">
 						<label>Last Name *</label>
-						<input type="text" id="declineLastName" required>
+						<input type="text" id="declineLastName">
 					</div>
 				</div>
 
 				<div class="form-group">
-					<label>Email *</label>
-					<input type="email" id="declineEmail" required>
+					<label>Email (Optional)</label>
+					<input type="email" id="declineEmail">
+					<p style="font-size: 0.85em; color: #666; margin-top: 5px;">We'll only use this to send you a copy of your declination if requested.</p>
 				</div>
 
 				<div class="form-group">
 					<label>Date *</label>
-					<input type="date" id="declineDate" required>
+					<input type="date" id="declineDate">
 				</div>
 
 				<div class="form-group">
-					<label>Signature Method *</label>
+					<label>Signature *</label>
 					<div class="option-tabs">
 						<button type="button" class="tab-button active" onclick="switchDeclineSignatureMethod('draw')">Draw Signature</button>
 						<button type="button" class="tab-button" onclick="switchDeclineSignatureMethod('type')">Type Name</button>
@@ -505,14 +507,14 @@
 					</div>
 
 					<div id="typeDeclineSignature" class="signature-input">
-						<label>Type your full name as it appears above</label>
+						<label>Type your full name</label>
 						<input type="text" id="declineTypedName" class="typed-signature" placeholder="Type your full name here">
 					</div>
 
 					<div class="error" id="declineSignatureError">Please provide your signature</div>
 				</div>
 
-				<button type="button" class="btn-submit" onclick="submitDeclineForm()">Submit Declination</button>
+				<button type="button" class="btn-submit" id="submitDeclineBtn" onclick="submitDeclineForm()">Submit Declination</button>
 			</div>
 
 			<!-- Step 1: Personal Information -->
@@ -872,8 +874,8 @@
 		const email = document.getElementById('declineEmail').value.trim();
 		const date = document.getElementById('declineDate').value;
 
-		if (!firstName || !lastName || !email || !date) {
-			alert('Please fill in all required fields.');
+		if (!firstName || !lastName || !date) {
+			alert('Please fill in your name and date.');
 			return;
 		}
 
@@ -911,13 +913,17 @@
 			}
 		}
 
+		const submitBtn = document.getElementById('submitDeclineBtn');
+		submitBtn.disabled = true;
+		submitBtn.textContent = 'Submitting...';
+
 		const ipAddress = await getUserIP();
 
 		const formData = {
 			action: 'submit_decline',
 			firstName: firstName,
 			lastName: lastName,
-			email: email,
+			email: email || 'Not provided',
 			date: date,
 			signatureMethod: declineSignatureMethod,
 			signature: signatureData,
@@ -956,6 +962,8 @@
 		} catch (error) {
 			alert('There was an error submitting the form. Please try again.');
 			console.error('Error:', error);
+			submitBtn.disabled = false;
+			submitBtn.textContent = 'Submit Declination';
 		}
 	}
 
