@@ -718,7 +718,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
-	const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzxdLJwATEIzo2q9cJ9WvxnrX4mLtdnr-pMjAAtqmNYHKqaCNazoqz4k-RZcSWhPdX0Vw/exec';
+	const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyuIg-bOLYIeGawMXkJiK2ueLHJZ3rjKxytUsYsNyNuPSb-yVp_-kt9qoED1D997hZf/exec';
 
 	let emailVerified = false;
 	let phoneVerified = false;
@@ -1279,7 +1279,6 @@
 		const btn = document.getElementById('SMSCodeBtn');
 		btn.disabled = true;
 		btn.textContent = 'Sending...';
-		+
 
 		try {
 			await fetch(SCRIPT_URL, {
@@ -1332,7 +1331,7 @@
 			document.getElementById('phoneVerifiedBadge').innerHTML = '<span class="verified-badge">✓ Verified</span>';
 			document.getElementById('continueToForm').disabled = false;
 			document.getElementById('phone').disabled = true;
-			document.getElementById('sendSMSBtn').disabled = true;
+			document.getElementById('SMSCodeBtn').disabled = true;
 
 		} catch (error) {
 			document.getElementById('smsCodeError').textContent = 'Invalid or expired code';
