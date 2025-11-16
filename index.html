@@ -950,6 +950,7 @@
 		try {
 			await fetch(SCRIPT_URL, {
 				method: 'POST',
+				mode: 'no-cors',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(formData)
 			});
@@ -1217,6 +1218,7 @@
 		try {
 			const response = await fetch(SCRIPT_URL, {
 				method: 'POST',
+				mode: 'no-cors',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ action: 'send_email_code', email: email })
 			});
@@ -1245,6 +1247,7 @@
 		try {
 			const response = await fetch(SCRIPT_URL, {
 				method: 'POST',
+				mode: 'no-cors',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					action: 'verify_email_code',
