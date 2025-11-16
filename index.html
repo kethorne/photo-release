@@ -736,7 +736,7 @@
 		}
 	}
 
-	// Decline signature pad setup
+	// ========== DECLINE SIGNATURE PAD SETUP ==========
 	let declineCanvas, declineCtx;
 	let isDrawingDecline = false;
 	let hasDeclineSignature = false;
@@ -853,7 +853,7 @@
 		document.getElementById('declineSignatureError').style.display = 'none';
 	}
 
-	// Handle consent choice
+	// ========== CONSENT CHOICE HANDLER ==========
 	function handleConsentChoice() {
 		const choice = document.querySelector('input[name="consentChoice"]:checked');
 
@@ -868,7 +868,6 @@
 		if (choice.value === 'decline') {
 			document.getElementById('declineSection').classList.remove('hidden');
 			document.getElementById('declineDate').valueAsDate = new Date();
-			// Initialize decline signature pad after it's visible
 			setTimeout(initializeDeclineSignaturePad, 100);
 		} else {
 			document.getElementById('section1').classList.remove('hidden');
@@ -877,7 +876,7 @@
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	}
 
-	// Submit decline form
+	// ========== SUBMIT DECLINE FORM ==========
 	async function submitDeclineForm() {
 		const firstName = document.getElementById('declineFirstName').value.trim();
 		const lastName = document.getElementById('declineLastName').value.trim();
@@ -942,7 +941,6 @@
 			userAgent: navigator.userAgent
 		};
 
-		// Generate decline PDF
 		const pdf = generateDeclinePDF(formData);
 		const pdfBase64 = pdf.output('datauristring');
 		formData.pdfBase64 = pdfBase64;
@@ -955,15 +953,14 @@
 				body: JSON.stringify(formData)
 			});
 
-			// Show success and offer download
 			const pdfBlob = pdf.output('blob');
 			const pdfUrl = URL.createObjectURL(pdfBlob);
 
 			document.getElementById('successMessage').innerHTML = `
-                    ✓ Thank you. Your declination has been recorded.
-                    <br>
-                    <a href="${pdfUrl}" download="Sprouting_Lens_Declination_${firstName}_${lastName}.pdf" class="download-link">Download Your Declination Form (PDF)</a>
-                `;
+				✓ Thank you. Your declination has been recorded.
+				<br>
+				<a href="${pdfUrl}" download="Sprouting_Lens_Declination_${firstName}_${lastName}.pdf" class="download-link">Download Your Declination Form (PDF)</a>
+			`;
 			document.getElementById('successMessage').style.display = 'block';
 			document.getElementById('declineSection').style.display = 'none';
 
@@ -977,7 +974,7 @@
 		}
 	}
 
-	// Generate decline PDF
+	// ========== GENERATE DECLINE PDF ==========
 	function generateDeclinePDF(formData) {
 		const { jsPDF } = window.jspdf;
 		const doc = new jsPDF();
@@ -1053,7 +1050,7 @@
 		return doc;
 	}
 
-	// Signature Pad Setup
+	// ========== MAIN SIGNATURE PAD SETUP ==========
 	const canvas = document.getElementById('signaturePad');
 	const ctx = canvas.getContext('2d');
 	let isDrawing = false;
@@ -1146,7 +1143,7 @@
 	function switchSignatureMethod(method) {
 		signatureMethod = method;
 
-		const buttons = document.querySelectorAll('.tab-button');
+		const buttons = document.querySelectorAll('#section4 .tab-button');
 		buttons.forEach(btn => btn.classList.remove('active'));
 		event.target.classList.add('active');
 
@@ -1162,9 +1159,10 @@
 		document.getElementById('signatureError').style.display = 'none';
 	}
 
+	// Set default date
 	document.getElementById('date').valueAsDate = new Date();
 
-	// Step navigation
+	// ========== STEP NAVIGATION ==========
 	function goToStep2() {
 		const fields = ['firstName', 'lastName', 'address1', 'city', 'state', 'zipCode'];
 		let isValid = true;
@@ -1203,7 +1201,7 @@
 		}
 	}
 
-	// Email verification
+	// ========== EMAIL VERIFICATION ==========
 	async function sendEmailCode() {
 		const email = document.getElementById('email').value;
 		if (!email) {
@@ -1256,7 +1254,6 @@
 				})
 			});
 
-			// Assume success with no-cors
 			emailVerified = true;
 			document.getElementById('emailCodeSuccess').style.display = 'block';
 			document.getElementById('emailCodeError').style.display = 'none';
@@ -1270,7 +1267,8 @@
 			document.getElementById('emailCodeError').style.display = 'block';
 		}
 	}
-	// SMS verification
+
+	// ========== SMS VERIFICATION ==========
 	async function sendSMSCode() {
 		const phone = document.getElementById('phone').value;
 		if (!phone) {
@@ -1290,7 +1288,6 @@
 				body: JSON.stringify({ action: 'send_sms_code', phone: phone })
 			});
 
-			// Wait a moment
 			await new Promise(resolve => setTimeout(resolve, 1000));
 
 			document.getElementById('smsCodeGroup').style.display = 'block';
@@ -1326,10 +1323,8 @@
 				})
 			});
 
-			// Wait a moment
 			await new Promise(resolve => setTimeout(resolve, 1000));
 
-			// Assume success with no-cors
 			phoneVerified = true;
 			document.getElementById('smsCodeSuccess').style.display = 'block';
 			document.getElementById('smsCodeError').style.display = 'none';
@@ -1343,11 +1338,11 @@
 			document.getElementById('smsCodeError').style.display = 'block';
 		}
 	}
-	// Form submission handler
+
+	// ========== FORM SUBMISSION HANDLER ==========
 	document.getElementById('releaseForm').addEventListener('submit', async function(e) {
 		e.preventDefault();
 
-		// Validate e-sign consent
 		const esignConsent = document.getElementById('esignConsent');
 		if (!esignConsent.checked) {
 			document.getElementById('esignConsentError').style.display = 'block';
@@ -1356,7 +1351,6 @@
 		}
 		document.getElementById('esignConsentError').style.display = 'none';
 
-		// Validate date
 		const date = document.getElementById('date').value;
 		if (!date) {
 			document.getElementById('dateError').style.display = 'block';
@@ -1364,7 +1358,6 @@
 		}
 		document.getElementById('dateError').style.display = 'none';
 
-		// Validate signature
 		let signatureData = null;
 
 		if (signatureMethod === 'draw') {
@@ -1382,7 +1375,6 @@
 				return;
 			}
 
-			// Create a canvas with typed name
 			const tempCanvas = document.createElement('canvas');
 			tempCanvas.width = 720;
 			tempCanvas.height = 200;
@@ -1399,15 +1391,12 @@
 
 		document.getElementById('signatureError').style.display = 'none';
 
-		// Disable submit button
 		const submitBtn = document.getElementById('submitBtn');
 		submitBtn.disabled = true;
 		submitBtn.textContent = 'Submitting...';
 
-		// Get IP address
 		const ipAddress = await getUserIP();
 
-		// Collect all form data
 		const formData = {
 			action: 'submit_consent',
 			firstName: document.getElementById('firstName').value.trim(),
@@ -1429,13 +1418,11 @@
 			userAgent: navigator.userAgent
 		};
 
-		// Generate PDF
 		const pdf = generateConsentPDF(formData);
 		const pdfBase64 = pdf.output('datauristring');
 		formData.pdfBase64 = pdfBase64;
 
 		try {
-			// Submit to Google Apps Script
 			await fetch(SCRIPT_URL, {
 				method: 'POST',
 				mode: 'no-cors',
@@ -1443,7 +1430,6 @@
 				body: JSON.stringify(formData)
 			});
 
-			// Show success message with download link
 			const pdfBlob = pdf.output('blob');
 			const pdfUrl = URL.createObjectURL(pdfBlob);
 
@@ -1464,19 +1450,17 @@
 		}
 	});
 
-	// Generate consent PDF
+	// ========== GENERATE CONSENT PDF ==========
 	function generateConsentPDF(formData) {
 		const { jsPDF } = window.jspdf;
 		const doc = new jsPDF();
 
-		// Header
 		doc.setFontSize(20);
 		doc.setTextColor(7, 92, 250);
 		doc.text('The Sprouting Lens', 105, 20, { align: 'center' });
 		doc.setFontSize(14);
 		doc.text('Photo & Video Release Form', 105, 28, { align: 'center' });
 
-		// Personal Information
 		doc.setFontSize(10);
 		doc.setTextColor(0, 0, 0);
 		let y = 50;
@@ -1503,7 +1487,6 @@
 		doc.text(`Phone: ${formData.phone} ${formData.phoneVerified ? '(Verified)' : ''}`, 20, y);
 		y += 12;
 
-		// Terms & Conditions
 		doc.setFontSize(12);
 		doc.setFont(undefined, 'bold');
 		doc.text('Terms & Conditions', 20, y);
@@ -1550,7 +1533,6 @@
 
 		y += 5;
 
-		// Signature section
 		if (y > 220) {
 			doc.addPage();
 			y = 20;
@@ -1568,7 +1550,6 @@
 
 		doc.text('Signature:', 20, y);
 
-		// Add signature image
 		if (formData.signature) {
 			try {
 				doc.addImage(formData.signature, 'PNG', 20, y + 2, 80, 20);
@@ -1580,7 +1561,6 @@
 		y += 25;
 		doc.text(`Signature Method: ${formData.signatureMethod === 'draw' ? 'Drawn' : 'Typed'}`, 20, y);
 
-		// Footer with metadata
 		y += 15;
 		doc.setFontSize(8);
 		doc.setTextColor(128, 128, 128);
