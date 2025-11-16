@@ -602,7 +602,7 @@
 					<label>Phone Number * <span id="phoneVerifiedBadge"></span></label>
 					<div class="verification-input">
 						<input type="tel" id="phone" placeholder="+1 (555) 123-4567" required>
-						<button type="button" class="btn"  onclick="sendSMSCode()">Send Code</button>
+						<button type="button" class="btn" id="SMSCodeBtn" onclick="sendSMSCode()">Send Code</button>
 					</div>
 					<div class="error" id="phoneError">Please enter a valid phone number</div>
 				</div>
@@ -1276,7 +1276,7 @@
 			return;
 		}
 
-		const btn = document.getElementById('phone');
+		const btn = document.getElementById('SMSCodeBtn');
 		btn.disabled = true;
 		btn.textContent = 'Sending...';
 		+
