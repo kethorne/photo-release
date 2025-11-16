@@ -1257,19 +1257,32 @@
 		btn.textContent = 'Sending...';
 
 		try {
+			// 1. We removed 'mode: no-cors'
 			const response = await fetch(SCRIPT_URL, {
 				method: 'POST',
-				mode: 'no-cors',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ action: 'send_email_code', email: email })
 			});
 
-			document.getElementById('emailCodeGroup').style.display = 'block';
-			btn.textContent = 'Resend Code';
-			btn.disabled = false;
+			// 2. We now read the JSON response from the server
+			const result = await response.json();
+
+			// 3. We check if the server said it was successful
+			if (result.success) {
+				document.getElementById('emailCodeGroup').style.display = 'block';
+				btn.textContent = 'Resend Code';
+				btn.disabled = false;
+			} else {
+				// This will show the real error from the server (e.g., "Failed to send email")
+				alert('Error: ' + result.message);
+				btn.disabled = false;
+				btn.textContent = 'Send Code';
+			}
 
 		} catch (error) {
-			alert('Error sending code: ' + error.message);
+			// This will catch network errors (e.g., no internet)
+			console.error('Fetch Error:', error);
+			alert('An error occurred. Please try again.');
 			btn.disabled = false;
 			btn.textContent = 'Send Code';
 		}
@@ -1286,9 +1299,9 @@
 		}
 
 		try {
+			// 1. We removed 'mode: no-cors'
 			const response = await fetch(SCRIPT_URL, {
 				method: 'POST',
-				mode: 'no-cors',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					action: 'verify_email_code',
@@ -1297,21 +1310,35 @@
 				})
 			});
 
-			emailVerified = true;
-			document.getElementById('emailCodeSuccess').style.display = 'block';
-			document.getElementById('emailCodeError').style.display = 'none';
-			document.getElementById('emailVerifiedBadge').innerHTML = '<span class="verified-badge">✓ Verified</span>';
-			document.getElementById('continueToSMS').disabled = false;
-			document.getElementById('email').disabled = true;
-			document.getElementById('sendEmailBtn').disabled = true;
+			// 2. We now read the JSON response from the server
+			const result = await response.json();
+
+			// 3. We check if the server said it was successful
+			if (result.success) {
+				emailVerified = true;
+				document.getElementById('emailCodeSuccess').style.display = 'block';
+				document.getElementById('emailCodeError').style.display = 'none';
+				document.getElementById('emailVerifiedBadge').innerHTML = '<span class="verified-badge">✓ Verified</span>';
+				document.getElementById('continueToSMS').disabled = false;
+				document.getElementById('email').disabled = true;
+				document.getElementById('sendEmailBtn').disabled = true;
+				document.getElementById('emailCode').disabled = true; // Also disable the code input
+				document.querySelector('#emailCodeGroup button').disabled = true; // Disable the verify button
+			} else {
+				// This will show the real error (e.g., "Invalid or expired code")
+				document.getElementById('emailCodeError').textContent = result.message;
+				document.getElementById('emailCodeError').style.display = 'block';
+			}
 
 		} catch (error) {
-			document.getElementById('emailCodeError').textContent = 'Invalid or expired code';
+			// This will catch network errors
+			console.error('Fetch Error:', error);
+			document.getElementById('emailCodeError').textContent = 'An error occurred. Please try again.';
 			document.getElementById('emailCodeError').style.display = 'block';
 		}
 	}
 
-	// ========== SMS VERIFICATION ==========
+	// ========== SMS VERIFICATION (NEW VERSION) ==========
 	async function sendSMSCode() {
 		const phoneInput = document.getElementById('phone');
 		const fullPhoneNumber = '+1' + phoneInput.value.replace(/\D/g, '');
@@ -1326,21 +1353,32 @@
 		btn.textContent = 'Sending...';
 
 		try {
-			await fetch(SCRIPT_URL, {
+			// 1. We removed 'mode: no-cors'
+			const response = await fetch(SCRIPT_URL, {
 				method: 'POST',
-				mode: 'no-cors',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ action: 'send_sms_code', phone: fullPhoneNumber })
 			});
 
-			await new Promise(resolve => setTimeout(resolve, 1000));
+			// 2. We now read the JSON response from the server
+			const result = await response.json();
 
-			document.getElementById('smsCodeGroup').style.display = 'block';
-			btn.textContent = 'Resend Code';
-			btn.disabled = false;
+			// 3. We check if the server said it was successful
+			if (result.success) {
+				document.getElementById('smsCodeGroup').style.display = 'block';
+				btn.textContent = 'Resend Code';
+				btn.disabled = false;
+			} else {
+				// This will show the real error (e.g., "Invalid or expired code")
+				alert('Error: ' + result.message);
+				btn.disabled = false;
+				btn.textContent = 'Send Code';
+			}
 
 		} catch (error) {
-			alert('Error sending code. Please try again.');
+			// This will catch network errors
+			console.error('Fetch Error:', error);
+			alert('An error occurred. Please try again.');
 			btn.disabled = false;
 			btn.textContent = 'Send Code';
 		}
@@ -1358,29 +1396,41 @@
 		}
 
 		try {
-			await fetch(SCRIPT_URL, {
+			// 1. We removed 'mode: no-cors'
+			const response = await fetch(SCRIPT_URL, {
 				method: 'POST',
-				mode: 'no-cors',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					action: 'verify_sms_code',
-					phone: fullPhoneNumber,
+					phone: fullPhoneNumber, // Use the full formatted number
 					code: code
 				})
 			});
 
-			await new Promise(resolve => setTimeout(resolve, 1000));
+			// 2. We now read the JSON response from the server
+			const result = await response.json();
 
-			phoneVerified = true;
-			document.getElementById('smsCodeSuccess').style.display = 'block';
-			document.getElementById('smsCodeError').style.display = 'none';
-			document.getElementById('phoneVerifiedBadge').innerHTML = '<span class="verified-badge">✓ Verified</span>';
-			document.getElementById('continueToForm').disabled = false;
-			document.getElementById('phone').disabled = true;
-			document.getElementById('SMSCodeBtn').disabled = true;
+			// 3. We check if the server said it was successful
+			if (result.success) {
+				phoneVerified = true;
+				document.getElementById('smsCodeSuccess').style.display = 'block';
+				document.getElementById('smsCodeError').style.display = 'none';
+				document.getElementById('phoneVerifiedBadge').innerHTML = '<span class="verified-badge">✓ Verified</span>';
+				document.getElementById('continueToForm').disabled = false;
+				document.getElementById('phone').disabled = true;
+				document.getElementById('SMSCodeBtn').disabled = true;
+				document.getElementById('smsCode').disabled = true; // Also disable the code input
+				document.querySelector('#smsCodeGroup button').disabled = true; // Disable the verify button
+			} else {
+				// This will show the real error (e.g., "Invalid or expired code")
+				document.getElementById('smsCodeError').textContent = result.message;
+				document.getElementById('smsCodeError').style.display = 'block';
+			}
 
 		} catch (error) {
-			document.getElementById('smsCodeError').textContent = 'Invalid or expired code';
+			// This will catch network errors
+			console.error('Fetch Error:', error);
+			document.getElementById('smsCodeError').textContent = 'An error occurred. Please try again.';
 			document.getElementById('smsCodeError').style.display = 'block';
 		}
 	}
