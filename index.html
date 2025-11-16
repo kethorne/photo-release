@@ -76,6 +76,18 @@
 			margin-bottom: 20px;
 		}
 
+		.verification-input {
+			display: flex;
+			align-items: center;
+			gap: 5px;
+		}
+
+		.phone-prefix {
+			font-weight: 500;
+			color: #333;
+			padding: 8px 0;
+		}
+
 		label {
 			display: block;
 			margin-bottom: 8px;
@@ -601,8 +613,9 @@
 				<div class="form-group">
 					<label>Phone Number * <span id="phoneVerifiedBadge"></span></label>
 					<div class="verification-input">
+						<span class="phone-prefix">+1</span>
 						<input type="tel" id="phone"
-						       placeholder="+1 (555) 123-4567" required>+1
+						       placeholder="(555) 123-4567" required>
 						<button type="button" class="btn" id="SMSCodeBtn" onclick="sendSMSCode()">Send Code</button>
 					</div>
 					<div class="error" id="phoneError">Please enter a valid phone number</div>
@@ -1271,8 +1284,10 @@
 
 	// ========== SMS VERIFICATION ==========
 	async function sendSMSCode() {
-		const phone = document.getElementById('phone').value;
-		if (!phone) {
+		const phoneInput = document.getElementById('phone');
+		const fullPhoneNumber = '+1' + phoneInput.value.replace(/\D/g, '');
+
+		if (!phoneInput.value) {
 			alert('Please enter your phone number');
 			return;
 		}
@@ -1286,7 +1301,7 @@
 				method: 'POST',
 				mode: 'no-cors',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ action: 'send_sms_code', phone: phone })
+				body: JSON.stringify({ action: 'send_sms_code', phone: fullPhoneNumber })
 			});
 
 			await new Promise(resolve => setTimeout(resolve, 1000));
@@ -1303,7 +1318,8 @@
 	}
 
 	async function verifySMSCode() {
-		const phone = document.getElementById('phone').value;
+		const phoneInput = document.getElementById('phone');
+		const fullPhoneNumber = '+1' + phoneInput.value.replace(/\D/g, '');
 		const code = document.getElementById('smsCode').value;
 
 		if (!code || code.length !== 6) {
@@ -1319,7 +1335,7 @@
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					action: 'verify_sms_code',
-					phone: phone,
+					phone: fullPhoneNumber,
 					code: code
 				})
 			});
