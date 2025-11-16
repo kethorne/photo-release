@@ -82,10 +82,37 @@
 			gap: 5px;
 		}
 
+		/* Add these new styles for the phone prefix */
+		.phone-input-group {
+			display: flex;
+			flex: 1; /* Makes this group fill the available space */
+		}
+
 		.phone-prefix {
-			font-weight: 500;
+			display: flex;
+			align-items: center;
+			padding: 12px;
+			border: 2px solid #e0e0e0;
+			border-right: none;
+			border-radius: 6px 0 0 6px;
+			background-color: #f8f9fa; /* A light grey to show it's not editable */
+			font-size: 1em;
 			color: #333;
-			padding: 8px 0;
+		}
+
+		/* This makes the main phone input merge with the prefix */
+		.phone-input-group input[type="tel"] {
+			border-left: none;
+			border-radius: 0 6px 6px 0;
+		}
+
+		/* This makes the prefix border turn blue when the input is focused */
+		.phone-input-group input[type="tel"]:focus {
+			border-color: #075CFA;
+		}
+		.phone-input-group input[type="tel"]:focus + .phone-prefix,
+		.phone-input-group:focus-within .phone-prefix {
+			border-color: #075CFA;
 		}
 
 		label {
@@ -613,9 +640,11 @@
 				<div class="form-group">
 					<label>Phone Number * <span id="phoneVerifiedBadge"></span></label>
 					<div class="verification-input">
-						<span class="phone-prefix">+1</span>
-						<input type="tel" id="phone"
-						       placeholder="(555) 123-4567" required>
+
+						<div class="phone-input-group">
+							<span class="phone-prefix">+1</span>
+							<input type="tel" id="phone" placeholder="(555) 123-4567" required>
+						</div>
 						<button type="button" class="btn" id="SMSCodeBtn" onclick="sendSMSCode()">Send Code</button>
 					</div>
 					<div class="error" id="phoneError">Please enter a valid phone number</div>
