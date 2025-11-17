@@ -762,8 +762,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 	const SCRIPT_URL =
-			"https://api.photorelease.thesproutinglens.com/?url=" +
-			encodeURIComponent("https://script.google.com/macros/s/AKfycbzVqJaRZN4sh6C-b6o4jLbdmSaWDimLqVkEcfq2V-4PBMvpgmsUWg41ZgqucjNOcp7KoA/exec");
+			"https://api.photorelease.thesproutinglens.com/?url=https://script.google.com/macros/s/AKfycbzVqJaRZN4sh6C-b6o4jLbdmSaWDimLqVkEcfq2V-4PBMvpgmsUWg41ZgqucjNOcp7KoA/exec";
 
 
 
@@ -1498,7 +1497,7 @@
 		const ipAddress = await getUserIP();
 
 		const formData = {
-			action: 'submit_consent',
+			action: 'submit_form',
 			firstName: document.getElementById('firstName').value.trim(),
 			lastName: document.getElementById('lastName').value.trim(),
 			address1: document.getElementById('address1').value.trim(),
@@ -1507,7 +1506,7 @@
 			state: document.getElementById('state').value.trim(),
 			zipCode: document.getElementById('zipCode').value.trim(),
 			email: document.getElementById('email').value.trim(),
-			phone: document.getElementById('phone').value.trim(),
+			phone: document.getElementById('phone').value.replace(/\D/g, ''),
 			date: date,
 			signatureMethod: signatureMethod,
 			signature: signatureData,
@@ -1525,22 +1524,26 @@
 		try {
 			await fetch(SCRIPT_URL, {
 				method: 'POST',
-				mode: 'no-cors',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(formData)
 			});
 
-			const pdfBlob = pdf.output('blob');
-			const pdfUrl = URL.createObjectURL(pdfBlob);
+	        const result = await response.json();
 
-			const downloadLink = document.getElementById('downloadPDF');
-			downloadLink.href = pdfUrl;
-			downloadLink.download = `Sprouting_Lens_Release_${formData.firstName}_${formData.lastName}.pdf`;
+			if (result.success) {
+				const pdfBlob = pdf.output('blob');
+				const pdfUrl = URL.createObjectURL(pdfBlob);
 
-			document.getElementById('successMessage').style.display = 'block';
-			document.getElementById('section4').style.display = 'none';
+				const downloadLink = document.getElementById('downloadPDF');
+				downloadLink.href = pdfUrl;
+				downloadLink.download = `Sprouting_Lens_Release_${formData.firstName}_${formData.lastName}.pdf`;
 
-			window.scrollTo({ top: 0, behavior: 'smooth' });
+				document.getElementById('successMessage').style.display = 'block';
+				document.getElementById('section4').style.display = 'none';
+
+				window.scrollTo({ top: 0, behavior: 'smooth' });
+			}
+
 
 		} catch (error) {
 			alert('There was an error submitting the form. Please try again.');
